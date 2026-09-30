@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sone Restaurant Dumraon - Order Online</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@800&display=swap" rel="stylesheet">
+    <title>Order - Sone Restaurant</title>
+    
+    <link rel="icon" type="image/png" href="sonelogo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- html2canvas for capturing Order Receipt -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
@@ -16,228 +17,159 @@
         
         /* Navbar */
         .navbar { background: #fff; padding: 12px 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo-img { height: 55px; width: auto; object-fit: contain; }
+        .logo-img { height: 45px; width: auto; object-fit: contain; }
 
-        /* Full Width Image Slider (Dashboard) */
-        .dashboard-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; background: #000; }
+        /* Dashboard Slider */
+        .dashboard-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; background:#111;}
         .dashboard-slider::-webkit-scrollbar { display: none; }
-        .slide { min-width: 100%; height: 350px; scroll-snap-align: start; }
-        .slide img { width: 100%; height: 100%; object-fit: cover; }
+        .slide { min-width: 100%; height: 250px; position: relative; scroll-snap-align: start; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        .slide-text { position: absolute; bottom: 20px; left: 20px; color: white; }
+        .slide-text h2 { font-size: 24px; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        .slide-badge { font-size: 13px; background: #d32f2f; display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
 
-        /* Order Now Big Button */
-        .order-now-container { text-align: center; margin: -25px 20px 30px; position: relative; z-index: 10; }
-        .order-now-btn { background: linear-gradient(135deg, #d32f2f, #f44336); color: white; border: none; padding: 18px 50px; font-size: 20px; font-weight: 700; border-radius: 40px; box-shadow: 0 10px 25px rgba(211, 47, 47, 0.4); cursor: pointer; animation: pulse 2s infinite; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; border: 2px solid white;}
+        /* Order Now Button */
+        .order-now-container { text-align: center; margin: -20px 20px 20px; position: relative; z-index: 10; }
+        .order-now-btn { background: #d32f2f; color: white; border: none; padding: 15px 40px; font-size: 18px; font-weight: 700; border-radius: 30px; box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4); cursor: pointer; text-decoration: none; display: inline-flex; align-items:center; gap:10px; animation: pulse 2s infinite;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* Menu Categories */
-        .section-title { padding: 0 20px 15px; font-size: 24px; font-weight: 800; color: #111; text-align: center; font-family: 'Montserrat', sans-serif;}
-        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding: 10px 20px 20px; background: #f8f9fa; position: sticky; top: 79px; z-index: 99; }
-        .category-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip { background: white; padding: 10px 20px; border-radius: 25px; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; color: #555; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
-        .cat-chip.active { background: #d32f2f; color: white; border-color: #d32f2f; }
-
-        /* Menu Grid */
-        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 20px 20px; max-width: 800px; margin: 0 auto; }
-        .menu-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; display: flex; flex-direction: column; }
-        .food-img { width: 100%; height: 140px; object-fit: cover; }
-        .menu-info { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
-        .menu-title { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 5px; line-height: 1.2; height: 36px;}
-        .price { color: #d32f2f; font-weight: 800; font-size: 18px; margin-bottom: 12px; }
+        /* Menu */
+        .section-title { padding: 20px; font-size: 20px; font-weight: 700; color: #222; text-align: center; background: white; margin-bottom: 15px; border-bottom: 1px solid #eee;}
         
-        /* Quantity Controls */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 15px; }
+        .menu-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .food-img { width: 100%; height: 120px; object-fit: cover; background: #eee;}
+        .menu-info { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; }
+        .menu-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 5px; line-height: 1.2; height: 34px; overflow:hidden;}
+        .price { color: #d32f2f; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+        
+        /* Qty Controls */
         .qty-controls { display: flex; align-items: center; justify-content: space-between; background: #fdf2f2; border: 1px solid #d32f2f; border-radius: 8px; overflow: hidden; }
-        .qty-btn { background: white; color: #d32f2f; border: none; width: 35px; height: 35px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .qty-btn:active { background: #d32f2f; color: white; }
-        .qty-value { font-weight: 700; color: #333; width: 30px; text-align: center; font-size: 16px;}
-        .add-btn { background: white; color: #d32f2f; border: 2px solid #d32f2f; padding: 8px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; text-align: center; font-size: 15px; transition: 0.2s;}
-        .add-btn:active { background: #d32f2f; color: white; }
+        .qty-btn { background: white; color: #d32f2f; border: none; width: 30px; height: 30px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .qty-value { font-weight: 700; color: #333; font-size: 14px;}
+        .add-btn { background: white; color: #d32f2f; border: 1px solid #d32f2f; padding: 6px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; text-align: center; }
 
         /* Floating Cart */
-        .floating-cart { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%) translateY(150%); width: 92%; max-width: 400px; background: #111; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; }
+        .floating-cart { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%) translateY(150%); width: 92%; max-width: 400px; background: #d32f2f; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px; box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4); transition: transform 0.4s ease; z-index: 1000; }
         .floating-cart.active { transform: translateX(-50%) translateY(0); }
-        .cart-info h4 { margin: 0; font-size: 14px; opacity: 0.8; font-weight: 500;}
-        .cart-info h3 { margin: 0; font-size: 20px; font-weight: 800;}
-        .checkout-btn { background: #34C759; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 8px;}
+        .checkout-btn { background: white; color: #d32f2f; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
-        /* Payment & Receipt Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: flex-end; z-index: 2000; }
-        .modal { background: #f8f9fa; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 0; text-align: center; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;}
+        /* Payment Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: flex-end; z-index: 2000; }
+        .modal { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 25px 20px; text-align: center; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto;}
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .modal-header { background: white; padding: 20px; border-radius: 24px 24px 0 0; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;}
-        .modal-header h2 { margin: 0; font-size: 20px; color: #111; font-family: 'Montserrat';}
-        .close-icon { font-size: 24px; color: #888; cursor: pointer; }
-
-        .modal-body { padding: 20px; }
-        
-        /* Receipt Design for Download */
-        .receipt-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px dashed #ccc; text-align: left; position: relative;}
-        .receipt-card::before, .receipt-card::after { content: ''; position: absolute; width: 20px; height: 20px; background: #f8f9fa; border-radius: 50%; top: 50%; transform: translateY(-50%); }
-        .receipt-card::before { left: -10px; border-right: 2px dashed #ccc; }
-        .receipt-card::after { right: -10px; border-left: 2px dashed #ccc; }
-        
-        .receipt-header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px;}
-        .receipt-header img { height: 40px; margin-bottom: 5px;}
-        .receipt-header p { font-size: 12px; color: #666; margin: 0;}
-        
-        .receipt-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #333; font-weight: 500;}
-        .receipt-total { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: #d32f2f; border-top: 2px solid #eee; padding-top: 15px; margin-top: 10px;}
-
-        /* QR Payment Section */
-        .qr-section { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .qr-section h3 { color: #111; margin-bottom: 15px; font-size: 18px;}
-        .qr-code-img { width: 180px; height: 180px; border-radius: 12px; border: 3px solid #f0f0f0; margin-bottom: 15px; padding: 5px;}
-        
-        .input-group { text-align: left; margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; padding-left: 5px;}
-        .modal input { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 12px; font-size: 15px; outline: none; background: #fff; font-weight: 500;}
-        .modal input:focus { border-color: #25D366; }
-
-        .action-buttons { position: sticky; bottom: 0; background: white; padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px;}
-        .btn-download { background: #f0f0f0; color: #333; border: none; padding: 15px; flex: 1; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;}
-        .btn-whatsapp { background: #25D366; color: white; border: none; padding: 15px; flex: 2; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;}
-        
+        .qr-box { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px dashed #ccc;}
+        .modal input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; outline: none; background: #fff;}
+        .submit-btn { background: #22c55e; color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); display: flex; justify-content: center; gap:10px; align-items: center; margin-bottom: 10px;}
+        .wa-btn { background: #25D366; color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; justify-content: center; gap:10px; align-items: center;}
     </style>
 </head>
 <body>
 
-    <!-- Header Logo -->
+    <!-- Header -->
     <div class="navbar">
-        <img src="./sonelogo_3.png" class="logo-img" alt="Sone Restaurant" onerror="this.src='./Sonelogo.png'">
+        <img src="sonelogo_3.png" class="logo-img" alt="Sone Restaurant">
     </div>
 
-    <!-- Full Width Image Slider (Only Photos, No Extra Design) -->
+    <!-- Image Slider -->
     <div class="dashboard-slider">
-        <div class="slide"><img src="./sonefront1_2.png" alt="Front View" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'"></div>
-        <div class="slide"><img src="./sonein1_2.png" alt="Cabins" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800'"></div>
-        <div class="slide"><img src="./sonein_2.png" alt="Interior" onerror="this.src='https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=800'"></div>
-        <div class="slide"><img src="./partyhall1_2.png" alt="Party Hall" onerror="this.src='https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800'"></div>
+        <div class="slide">
+            <img src="sonfront_2.png" alt="Front View" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'">
+            <div class="slide-text">
+                <h2>Welcome to Sone</h2>
+                <span class="slide-badge">Family Restaurant</span>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="sonein1_2.png" alt="Interior Cabins" onerror="this.src='https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800'">
+            <div class="slide-text">
+                <h2>Beautiful Ambience</h2>
+                <span class="slide-badge">Private Cabins</span>
+            </div>
+        </div>
+        <div class="slide">
+            <img src="partyhall1_2.png" alt="Party Hall" onerror="this.src='https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800'">
+            <div class="slide-text">
+                <h2>Party Hall</h2>
+                <span class="slide-badge">Book for Events</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Order Now Button -->
     <div class="order-now-container">
-        <a href="#menu-section" class="order-now-btn"><i class="fas fa-utensils"></i> ORDER NOW</a>
+        <a href="#menu-section" class="order-now-btn"><i class="fas fa-shopping-bag"></i> ORDER NOW</a>
     </div>
 
-    <h2 id="menu-section" class="section-title">Official Menu</h2>
+    <div id="menu-section" class="section-title">Our Premium Menu</div>
     
-    <!-- Menu Categories -->
-    <div class="category-scroll">
-        <div class="cat-chip active" onclick="filterMenu('All', this)">All Items</div>
-        <div class="cat-chip" onclick="filterMenu('Special', this)">Sone Specials</div>
-        <div class="cat-chip" onclick="filterMenu('Chicken', this)">Chicken</div>
-        <div class="cat-chip" onclick="filterMenu('Paneer', this)">Paneer</div>
-        <div class="cat-chip" onclick="filterMenu('Rice', this)">Biryani & Rice</div>
-        <div class="cat-chip" onclick="filterMenu('Roti', this)">Roti & Naan</div>
-    </div>
-
     <!-- Dynamic Menu Grid -->
-    <div class="menu-container" id="menu-grid"></div>
+    <div class="menu-grid" id="menu-grid"></div>
 
     <!-- Floating Cart -->
     <div class="floating-cart" id="floating-cart">
-        <div class="cart-info">
-            <h4 id="item-count">0 Items</h4>
-            <h3>₹<span id="total-price">0</span></h3>
+        <div>
+            <h4 id="item-count" style="margin:0; font-size:14px;">0 Items</h4>
+            <h3 style="margin:0;">₹<span id="total-price">0</span></h3>
         </div>
-        <button class="checkout-btn" onclick="openModal()"><i class="fas fa-shopping-bag"></i> Checkout</button>
+        <button class="checkout-btn" onclick="openModal()">Proceed ➔</button>
     </div>
 
-    <!-- Payment & Receipt Modal -->
+    <!-- Payment & Checkout Modal -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
-            <div class="modal-header">
-                <h2>Complete Payment</h2>
-                <i class="fas fa-times close-icon" onclick="closeModal()"></i>
+            <h2 style="color:#222; margin-bottom:5px;">Checkout</h2>
+            <h1 style="color:#d32f2f; font-size:28px; margin-bottom:15px;">Amount: ₹<span id="modal-total">0</span></h1>
+            
+            <div class="qr-box">
+                <p style="font-size: 13px; color: #666; font-weight: 600; margin-bottom: 5px;">Scan QR to Pay Securely</p>
+                <!-- REPLACE WITH YOUR ACTUAL UPI QR CODE -->
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="130">
             </div>
             
-            <div class="modal-body">
-                
-                <!-- Receipt Card (This will be downloaded as image) -->
-                <div class="receipt-card" id="receipt-box">
-                    <div class="receipt-header">
-                        <img src="./sonelogo1_3.png" onerror="this.style.display='none'" style="height: 35px;">
-                        <h3 style="margin:5px 0; color:#111; font-family:'Montserrat';">SONE RESTAURANT</h3>
-                        <p>Dumraon Station Road, Dumraon</p>
-                        <p style="margin-top:5px; font-weight:bold; color:#d32f2f;">Online Order Receipt</p>
-                    </div>
-                    <div id="receipt-items"></div>
-                    <div class="receipt-total">
-                        <span>Total Pay</span>
-                        <span>₹<span id="receipt-total-amt">0</span></span>
-                    </div>
-                    <p style="text-align:center; font-size:11px; color:#888; margin-top:15px; font-style:italic;">Please share this receipt on WhatsApp along with Payment Screenshot.</p>
-                </div>
-
-                <!-- QR Payment Section -->
-                <div class="qr-section">
-                    <h3>Scan to Pay: ₹<span id="modal-pay-amt" style="color:#d32f2f; font-weight:800;">0</span></h3>
-                    
-                    <!-- !!! UPLOAD YOUR ACTUAL QR CODE IMAGE HERE (e.g., ./myqr.png) !!! -->
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" class="qr-code-img" alt="Scan QR to Pay">
-                    <p style="font-size:13px; color:#555; font-weight:600; margin-bottom:15px;"><i class="fas fa-check-circle" style="color:#34C759;"></i> Accepts GPay, PhonePe, Paytm</p>
-                    
-                    <div class="input-group">
-                        <label>Customer Name</label>
-                        <input type="text" id="cust-name" placeholder="Enter your full name" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Payment UTR / Ref No.</label>
-                        <input type="text" id="utr-id" placeholder="12-digit transaction number" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-                <button class="btn-download" onclick="downloadReceipt()"><i class="fas fa-download"></i> Save Receipt</button>
-                <button class="btn-whatsapp" onclick="sendOrderToWhatsApp()"><i class="fab fa-whatsapp" style="font-size:20px;"></i> Send to Order</button>
-            </div>
+            <input type="text" id="cust-name" placeholder="Your Full Name" required>
+            <input type="tel" id="cust-phone" placeholder="Mobile Number" required>
+            <input type="text" id="utr-id" placeholder="Payment UTR No. (12 digits)" required>
+            
+            <button class="submit-btn" id="submit-btn" onclick="placeOrderOnline()">
+                <i class="fas fa-paper-plane"></i> Send Order Online
+            </button>
+            
+            <button class="wa-btn" onclick="sendOrderToWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Send via WhatsApp
+            </button>
+            
+            <p style="margin-top:15px; color:#888; font-weight:bold; cursor:pointer;" onclick="closeModal()">Cancel</p>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // SET YOUR WHATSAPP NUMBER HERE (Without + sign)
-        // ==========================================
-        const RESTAURANT_WHATSAPP_NUMBER = "9155745145";
+        // Supabase Connection
+        const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Huge Menu Data Collection
+        const WHATSAPP_NUMBER = "9155745145";
+
+        // Menu Data
         const menuItems = [
-            { id: 1, name: "Sone Spl. Paneer", price: 270, category: "Special", img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400" },
-            { id: 2, name: "Chi. Sone Spl. (F)", price: 570, category: "Special", img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400" },
-            { id: 3, name: "Mutton Spl. (8 Pic)", price: 650, category: "Special", img: "https://images.unsplash.com/photo-1544025162-811c76cc7822?w=400" },
-            
-            { id: 4, name: "Chi. Tandoori (F)", price: 450, category: "Chicken", img: "https://images.unsplash.com/photo-1599487405270-8e102657e28b?w=400" },
-            { id: 5, name: "Chicken Butter Masala", price: 200, category: "Chicken", img: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=400" },
-            { id: 6, name: "Chicken Dehati (F)", price: 550, category: "Chicken", img: "https://images.unsplash.com/photo-1574484284002-952d92456975?w=400" },
-            { id: 7, name: "Chi. Chilly (B) (F)", price: 230, category: "Chicken", img: "https://images.unsplash.com/photo-1626804475297-4160aae2fa34?w=400" },
-            
-            { id: 8, name: "Paneer Butter Masala", price: 200, category: "Paneer", img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=400" },
-            { id: 9, name: "Kadai Paneer", price: 230, category: "Paneer", img: "https://images.unsplash.com/photo-1589301773722-e427cc709bc8?w=400" },
-            { id: 10, name: "Paneer Chilly (F)", price: 220, category: "Paneer", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400" },
-            
-            { id: 11, name: "Chicken Biryani", price: 220, category: "Rice", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400" },
-            { id: 12, name: "Veg. Biryani", price: 170, category: "Rice", img: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400" },
-            { id: 13, name: "Chicken Fried Rice", price: 260, category: "Rice", img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400" },
-            { id: 14, name: "Jeera Rice", price: 110, category: "Rice", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400" },
-            
-            { id: 15, name: "Butter Naan", price: 80, category: "Roti", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" },
-            { id: 16, name: "Garlic Naan", price: 90, category: "Roti", img: "https://images.unsplash.com/photo-1626082895617-1c19b26ad160?w=400" },
-            { id: 17, name: "Tawa Butter Roti", price: 12, category: "Roti", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400" },
-            { id: 18, name: "Aloo Paratha", price: 70, category: "Roti", img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400" }
+            { id: 1, name: "Sone Spl. Paneer", price: 270, img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400" },
+            { id: 2, name: "Paneer Butter Masala", price: 200, img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=400" },
+            { id: 3, name: "Chicken Biryani", price: 220, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400" },
+            { id: 4, name: "Chi. Tandoori (F)", price: 450, img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400" },
+            { id: 5, name: "Aloo Dam Banarsi", price: 180, img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400" },
+            { id: 6, name: "Chicken Fried Rice", price: 260, img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400" },
+            { id: 7, name: "Butter Naan", price: 80, img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" },
+            { id: 8, name: "Chicken Lollypop", price: 310, img: "https://images.unsplash.com/photo-1626804475297-4160aae2fa34?w=400" }
         ];
 
         let cart = {}; 
-        let currentFilter = 'All';
 
-        const menuGrid = document.getElementById('menu-grid');
-        
         function renderMenu() {
-            menuGrid.innerHTML = '';
-            const filteredItems = currentFilter === 'All' ? menuItems : menuItems.filter(item => item.category === currentFilter);
-
-            filteredItems.forEach(item => {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+            
+            menuItems.forEach(item => {
                 const qty = cart[item.id] || 0;
                 let controlHTML = qty === 0 
                     ? `<div class="add-btn" onclick="updateCart(${item.id}, 1)">ADD +</div>`
@@ -247,9 +179,9 @@
                             <button class="qty-btn" onclick="updateCart(${item.id}, 1)">+</button>
                        </div>`;
 
-                menuGrid.innerHTML += `
+                grid.innerHTML += `
                     <div class="menu-card">
-                        <img src="${item.img}" class="food-img" alt="${item.name}" loading="lazy">
+                        <img src="${item.img}" class="food-img" alt="${item.name}">
                         <div class="menu-info">
                             <div class="menu-title">${item.name}</div>
                             <div class="price">₹${item.price}</div>
@@ -260,13 +192,6 @@
             updateCartUI();
         }
 
-        function filterMenu(category, element) {
-            currentFilter = category;
-            document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-            renderMenu();
-        }
-
         function updateCart(id, change) {
             if (!cart[id]) cart[id] = 0;
             cart[id] += change;
@@ -275,31 +200,19 @@
         }
 
         function updateCartUI() {
-            let totalAmt = 0, totalItems = 0;
-            let receiptHTML = '';
+            let totalAmt = 0;
+            let totalItems = 0;
             
             for (const [id, qty] of Object.entries(cart)) {
                 const item = menuItems.find(i => i.id == id);
-                let itemTotal = item.price * qty;
-                totalAmt += itemTotal;
+                totalAmt += item.price * qty;
                 totalItems += qty;
-                
-                receiptHTML += `
-                    <div class="receipt-item">
-                        <span>${qty} x ${item.name}</span>
-                        <span>₹${itemTotal}</span>
-                    </div>`;
             }
 
             if (totalItems > 0) {
                 document.getElementById('item-count').innerText = totalItems + " Items";
                 document.getElementById('total-price').innerText = totalAmt;
-                
-                // Update Modal Data
-                document.getElementById('receipt-items').innerHTML = receiptHTML;
-                document.getElementById('receipt-total-amt').innerText = totalAmt;
-                document.getElementById('modal-pay-amt').innerText = totalAmt;
-                
+                document.getElementById('modal-total').innerText = totalAmt;
                 document.getElementById('floating-cart').classList.add('active');
             } else {
                 document.getElementById('floating-cart').classList.remove('active');
@@ -311,69 +224,81 @@
         function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        // Download Receipt as Image
-        function downloadReceipt() {
-            const receiptBox = document.getElementById('receipt-box');
-            
-            // Add Name and UTR temporarily to receipt before downloading
-            const name = document.getElementById('cust-name').value || "Guest";
-            const utr = document.getElementById('utr-id').value || "Not Entered";
-            const timeStr = new Date().toLocaleString('en-IN');
-            
-            const extraDetails = document.createElement('div');
-            extraDetails.innerHTML = `<hr style="margin:10px 0; border:0; border-top:1px dashed #ccc;">
-                                      <p style="font-size:12px; margin:3px 0;"><strong>Name:</strong> ${name}</p>
-                                      <p style="font-size:12px; margin:3px 0;"><strong>UTR:</strong> ${utr}</p>
-                                      <p style="font-size:10px; margin:3px 0; color:#888;">${timeStr}</p>`;
-            receiptBox.insertBefore(extraDetails, receiptBox.lastElementChild);
-
-            html2canvas(receiptBox, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
-                let link = document.createElement('a');
-                link.download = `Sone_Order_Receipt.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-                receiptBox.removeChild(extraDetails); // Remove extra details after capture
-            });
-        }
-
-        // Send Direct Order to WhatsApp
-        function sendOrderToWhatsApp() {
+        // Data collection helper
+        function getOrderDetails() {
             const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
             const utr = document.getElementById('utr-id').value.trim();
-
-            if(!name || !utr) { 
-                alert("Please enter your Name and Payment UTR before sending the order."); 
-                return; 
-            }
-
-            let orderText = `*NEW ONLINE ORDER* 🚨\n\n`;
-            orderText += `*Customer:* ${name}\n`;
-            orderText += `*Payment UTR:* ${utr}\n\n`;
-            orderText += `*Order Items:*\n`;
             
+            if(!name || !phone || !utr) { alert("Please fill Name, Phone, and UTR No."); return null; }
+
+            let orderItemsList = [];
             let totalAmt = 0;
             for (const [id, qty] of Object.entries(cart)) {
                 const item = menuItems.find(i => i.id == id);
-                orderText += `🔹 ${qty} x ${item.name} (₹${item.price * qty})\n`;
+                orderItemsList.push(`${qty}x ${item.name}`);
                 totalAmt += item.price * qty;
             }
             
-            orderText += `\n*Paid Amount:* ₹${totalAmt}\n`;
-            orderText += `\n_Generated via Sone Restaurant App_`;
+            return { name, phone, utr, items: orderItemsList.join(", "), totalAmt };
+        }
+
+        // Method 1: Send to Supabase (Admin Dashboard)
+        async function placeOrderOnline() {
+            const details = getOrderDetails();
+            if(!details) return;
+
+            const btn = document.getElementById('submit-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const { data, error } = await supabase.from('orders').insert([
+                { customer_name: details.name, phone: details.phone, items: details.items, total_amount: details.totalAmt, utr_id: details.utr }
+            ]);
+
+            if(error) {
+                alert("Error: " + error.message);
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Order Online';
+                btn.disabled = false;
+            } else {
+                showSuccessMessage(details.name);
+            }
+        }
+
+        // Method 2: Send to WhatsApp
+        function sendOrderToWhatsApp() {
+            const details = getOrderDetails();
+            if(!details) return;
+
+            let orderText = `*NEW ONLINE ORDER* 🛎️\n\n`;
+            orderText += `*Name:* ${details.name}\n`;
+            orderText += `*Mobile:* ${details.phone}\n`;
+            orderText += `*UTR No:* ${details.utr}\n\n`;
+            orderText += `*Items Ordered:*\n`;
+            
+            for (const [id, qty] of Object.entries(cart)) {
+                const item = menuItems.find(i => i.id == id);
+                orderText += `▪️ ${qty} x ${item.name} (₹${item.price * qty})\n`;
+            }
+            
+            orderText += `\n*Total Amount:* ₹${details.totalAmt}\n`;
 
             const encodedText = encodeURIComponent(orderText);
-            const whatsappURL = `https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${encodedText}`;
+            const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`;
             window.open(whatsappURL, '_blank');
             
-            // Show Success
+            showSuccessMessage(details.name);
+        }
+
+        function showSuccessMessage(name) {
             document.getElementById('modal-overlay').innerHTML = `
-                <div class="modal" style="padding: 40px 20px; align-items:center; justify-content:center;">
-                    <i class="fab fa-whatsapp" style="font-size:60px; color:#25D366; margin-bottom:15px;"></i>
-                    <h2 style="color:#111;">Sent to WhatsApp!</h2>
-                    <p style="color:#666; margin: 15px 0;">Please share the downloaded receipt screenshot on the WhatsApp chat to confirm the order.</p>
-                    <button class="submit-btn" onclick="location.reload()" style="background:#111; width:80%;">Back to Home</button>
+                <div class="modal" style="padding: 40px 20px;">
+                    <i class="fas fa-check-circle" style="color:#22c55e; font-size:60px; margin-bottom:10px;"></i>
+                    <h2 style="color:#111;">Order Confirmed!</h2>
+                    <p style="color:#666; margin: 15px 0;">Thank you ${name}. Your order has been placed successfully.</p>
+                    <button class="submit-btn" onclick="location.reload()">Back to Home</button>
                 </div>`;
-            cart = {}; 
+            cart = {};
         }
     </script>
 </body>
