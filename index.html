@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sone Restaurant Dumraon | Order Online</title>
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f8f9fa; color: #333; }
+        
+        /* Navbar & Logo */
+        .navbar { background: #111; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .logo-img { max-height: 70px; width: auto; object-fit: contain; }
+        
+        /* Hero Section (Front Image) */
+        .hero { width: 100%; max-width: 800px; margin: 0 auto; position: relative; }
+        .hero img { width: 100%; height: auto; display: block; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .hero-text { text-align: center; padding: 20px 10px; }
+        .hero-text h1 { color: #d32f2f; font-size: 28px; }
+        .hero-text p { color: #555; font-size: 14px; font-weight: bold; background: #ffe082; display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 5px; }
+
+        /* Menu Grid */
+        .menu-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .menu-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .menu-card:hover { transform: translateY(-5px); }
+        .food-img { width: 100%; height: 180px; object-fit: cover; }
+        .menu-info { padding: 15px; text-align: center; }
+        .menu-info h3 { font-size: 18px; margin-bottom: 5px; }
+        .price { color: #d32f2f; font-weight: bold; font-size: 20px; margin-bottom: 15px; display: block; }
+        .add-btn { background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .add-btn:active { background: #388e3c; }
+
+        /* Cart & Payment Section */
+        .cart-section { text-align: center; padding: 20px; background: white; max-width: 600px; margin: 20px auto; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .cart-section h2 { margin-bottom: 15px; }
+        .checkout-btn { background: #ff9800; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; width: 80%; }
+        .checkout-btn:disabled { background: #aaa; cursor: not-allowed; }
+        
+        .payment-box { display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 20px; }
+        .payment-box input { width: 90%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        .submit-btn { background: #d32f2f; color: white; border: none; padding: 12px; width: 90%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar with Logo -->
+    <div class="navbar">
+        <img src="Sonelogo.png" class="logo-img" alt="Sone Restaurant Logo">
+    </div>
+
+    <!-- Hero Image (Bahar ki photo) -->
+    <div class="hero">
+        <img src="Sonefront1.png" alt="Sone Restaurant Front">
+    </div>
+    
+    <div class="hero-text">
+        <h1>Welcome to Sone Restaurant</h1>
+        <p>Order Timings: 12:00 PM to 9:00 PM</p>
+    </div>
+
+    <!-- Beautiful Menu Grid -->
+    <div class="menu-container">
+        <!-- Item 1 -->
+        <div class="menu-card">
+            <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80" class="food-img" alt="Chicken Biryani">
+            <div class="menu-info">
+                <h3>Chicken Biryani</h3>
+                <span class="price">₹220</span>
+                <button class="add-btn" onclick="addToCart('Chicken Biryani', 220)">Add to Cart</button>
+            </div>
+        </div>
+        
+        <!-- Item 2 -->
+        <div class="menu-card">
+            <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=500&q=80" class="food-img" alt="Paneer Butter Masala">
+            <div class="menu-info">
+                <h3>Paneer Butter Masala</h3>
+                <span class="price">₹200</span>
+                <button class="add-btn" onclick="addToCart('Paneer Butter Masala', 200)">Add to Cart</button>
+            </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="menu-card">
+            <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80" class="food-img" alt="Aloo Dam Banarsi">
+            <div class="menu-info">
+                <h3>Aloo Dam Banarsi</h3>
+                <span class="price">₹180</span>
+                <button class="add-btn" onclick="addToCart('Aloo Dam Banarsi', 180)">Add to Cart</button>
+            </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="menu-card">
+            <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=500&q=80" class="food-img" alt="Chicken Tandoori">
+            <div class="menu-info">
+                <h3>Chi. Tandoori (H)</h3>
+                <span class="price">₹260</span>
+                <button class="add-btn" onclick="addToCart('Chi. Tandoori (H)', 260)">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart & Payment Section -->
+    <div class="cart-section">
+        <h2>Total Bill: ₹<span id="total-price">0</span></h2>
+        <button id="checkout-btn" class="checkout-btn" onclick="showPayment()">Proceed to Checkout</button>
+        
+        <div class="payment-box" id="payment-section">
+            <h3 style="margin-bottom: 10px;">Pay via UPI</h3>
+            <p style="font-size: 12px; margin-bottom: 15px;">Scan QR, pay the exact amount & enter UTR</p>
+            <!-- Apna QR Code Image Yahan Daalein baad me -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="150" style="margin-bottom: 20px;">
+            
+            <input type="text" id="cust-name" placeholder="Aapka Naam" required>
+            <input type="tel" id="cust-phone" placeholder="Mobile Number" required>
+            <input type="text" id="utr-id" placeholder="Payment UTR / Ref No. (12 digits)" required>
+            <button class="submit-btn" id="submit-btn" onclick="placeOrder()">Confirm Order</button>
+        </div>
+    </div>
+
+    <script>
+        // AAPKA SUPABASE CONNECTION (API & KEY)
+        const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let total = 0;
+        let items = [];
+
+        // 12 PM to 9 PM Timing Check
+        const hour = new Date().getHours();
+        if (hour < 12 || hour >= 21) {
+            const btn = document.getElementById('checkout-btn');
+            btn.disabled = true;
+            btn.innerText = "Closed Now (Order 12 PM-9 PM)";
+        }
+
+        function addToCart(item, price) {
+            items.push(item);
+            total += price;
+            document.getElementById('total-price').innerText = total;
+            // Chhota sa notification (toast) 
+            const btn = event.target;
+            btn.innerText = "Added ✓";
+            btn.style.background = "#2e7d32";
+            setTimeout(() => { btn.innerText = "Add to Cart"; btn.style.background = "#4caf50"; }, 1000);
+        }
+
+        function showPayment() {
+            if(total > 0) {
+                document.getElementById('payment-section').style.display = 'block';
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } else {
+                alert("Pehle menu se koi dish select karein!");
+            }
+        }
+
+        async function placeOrder() {
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const utr = document.getElementById('utr-id').value;
+            const submitBtn = document.getElementById('submit-btn');
+
+            if(!name || !phone || !utr) {
+                alert("Kripya apna Naam, Phone aur UTR jaroor bharein!");
+                return;
+            }
+
+            submitBtn.innerText = "Processing...";
+            submitBtn.disabled = true;
+
+            // Supabase Database me data bhejna
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([
+                    { customer_name: name, phone: phone, items: items.join(", "), total_amount: total, utr_id: utr }
+                ]);
+
+            if (error) {
+                alert("Order place karne me error aayi: " + error.message);
+                submitBtn.innerText = "Confirm Order";
+                submitBtn.disabled = false;
+            } else {
+                alert("Dhanyawad! Aapka Order safaltapurvak mil gaya hai.");
+                location.reload(); // Page refresh kar dega
+            }
+        }
+    </script>
+</body>
+</html>
