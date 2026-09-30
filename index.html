@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sone Restaurant</title>
+    <title>Sone Restaurant Dumraon</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
         body { background-color: #f8f9fa; color: #333; padding-bottom: 90px; }
@@ -14,13 +13,13 @@
         .navbar { background: #fff; padding: 12px 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .logo-img { height: 50px; width: auto; object-fit: contain; }
 
-        /* Beautiful Dashboard / Hero */
+        /* Beautiful Dashboard Slider */
         .dashboard-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
         .dashboard-slider::-webkit-scrollbar { display: none; }
         .slide { min-width: 100%; height: 280px; position: relative; scroll-snap-align: start; }
-        .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
+        .slide img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.65); }
         .slide-text { position: absolute; bottom: 30px; left: 20px; color: white; }
-        .slide-text h2 { font-size: 26px; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+        .slide-text h2 { font-size: 26px; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
         .slide-text p { font-size: 14px; background: #d32f2f; display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
 
         /* Order Now Big Button */
@@ -28,9 +27,15 @@
         .order-now-btn { background: linear-gradient(135deg, #d32f2f, #f44336); color: white; border: none; padding: 15px 40px; font-size: 18px; font-weight: 700; border-radius: 30px; box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4); cursor: pointer; animation: pulse 2s infinite; text-decoration: none; display: inline-block; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* Menu Section */
-        .section-title { padding: 20px; font-size: 22px; font-weight: 700; color: #222; text-align: center; }
-        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 20px; max-width: 800px; margin: 0 auto; }
+        /* Menu Categories */
+        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding: 15px 20px; background: white; border-bottom: 1px solid #eee; position: sticky; top: 74px; z-index: 99; }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip { background: #f0f0f0; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; color: #555; border: 1px solid transparent; }
+        .cat-chip.active { background: #fdf2f2; color: #d32f2f; border-color: #d32f2f; }
+
+        /* Menu Grid */
+        .section-title { padding: 20px; font-size: 22px; font-weight: 700; color: #222; text-align: center; background: #f8f9fa; margin: 0; }
+        .menu-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 20px 20px; max-width: 800px; margin: 0 auto; }
         .menu-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; display: flex; flex-direction: column; }
         .food-img { width: 100%; height: 130px; object-fit: cover; }
         .menu-info { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
@@ -47,21 +52,25 @@
         /* Floating Cart */
         .floating-cart { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%) translateY(150%); width: 92%; max-width: 400px; background: #d32f2f; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px; box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4); transition: transform 0.4s ease; z-index: 1000; }
         .floating-cart.active { transform: translateX(-50%) translateY(0); }
-        .checkout-btn { background: white; color: #d32f2f; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .checkout-btn { background: white; color: #d32f2f; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px;}
 
-        /* Modal */
+        /* Checkout Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: flex-end; z-index: 2000; }
-        .modal { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 25px; text-align: center; animation: slideUp 0.3s ease-out; }
+        .modal { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 25px; text-align: center; animation: slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto;}
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 15px; outline: none; }
-        .submit-btn { background: #22c55e; color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
-        .close-modal { margin-top: 15px; color: #888; font-weight: 600; cursor: pointer; display: inline-block; }
+        .modal input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 15px; outline: none; background: #f9f9f9;}
+        .submit-btn { background: #22c55e; color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px;}
+        .close-modal { margin-top: 15px; color: #888; font-weight: 600; cursor: pointer; display: inline-block; padding: 10px;}
+        
+        .bill-summary { background: #f8f9fa; border: 1px dashed #ccc; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: left; }
+        .bill-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; color: #444;}
     </style>
 </head>
 <body>
 
+    <!-- Header -->
     <div class="navbar">
-        <img src="./sonelogo_2.png" class="logo-img" alt="Sone Restaurant Logo" onerror="this.style.display='none'">
+        <img src="./sonelogo_2.png" class="logo-img" alt="Sone Restaurant" onerror="this.style.display='none'">
     </div>
 
     <!-- Dashboard Image Slider -->
@@ -95,6 +104,16 @@
 
     <div id="menu-section" class="section-title">Our Premium Menu</div>
     
+    <!-- Menu Categories Filter -->
+    <div class="category-scroll">
+        <div class="cat-chip active" onclick="filterMenu('All', this)">All Items</div>
+        <div class="cat-chip" onclick="filterMenu('Paneer', this)">Paneer Spl.</div>
+        <div class="cat-chip" onclick="filterMenu('Chicken', this)">Chicken Spl.</div>
+        <div class="cat-chip" onclick="filterMenu('Rice', this)">Biryani & Rice</div>
+        <div class="cat-chip" onclick="filterMenu('Roti', this)">Breads & Roti</div>
+        <div class="cat-chip" onclick="filterMenu('Starter', this)">Starters</div>
+    </div>
+
     <!-- Dynamic Menu Grid -->
     <div class="menu-container" id="menu-grid"></div>
 
@@ -104,52 +123,77 @@
             <h4 id="item-count" style="margin:0; font-size:14px;">0 Items</h4>
             <h3 style="margin:0;">₹<span id="total-price">0</span></h3>
         </div>
-        <button class="checkout-btn" onclick="openModal()">Checkout ➔</button>
+        <button class="checkout-btn" onclick="openModal()">View Bill ➔</button>
     </div>
 
-    <!-- Payment Modal -->
+    <!-- Payment & WhatsApp Modal -->
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
-            <h2 style="color:#222; margin-bottom:5px;">Complete Order</h2>
-            <h1 style="color:#d32f2f; font-size:32px; margin-bottom:20px;">₹<span id="modal-total">0</span></h1>
+            <h2 style="color:#222; margin-bottom:15px;">Order Summary</h2>
             
-            <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Scan QR & Pay Exact Amount</p>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="130" style="margin-bottom: 20px; border-radius:8px;">
+            <div class="bill-summary" id="bill-summary-box">
+                <!-- Bill details generated by JS -->
+            </div>
+
+            <h1 style="color:#d32f2f; font-size:28px; margin-bottom:20px;">Pay: ₹<span id="modal-total">0</span></h1>
             
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px; font-weight: bold;">Step 1: Scan QR & Pay</p>
+            <!-- PUT YOUR ACTUAL UPI QR CODE IMAGE HERE -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="130" style="margin-bottom: 20px; border-radius:8px; border:2px solid #eee;">
+            
+            <p style="font-size: 13px; color: #666; margin-bottom: 10px; font-weight: bold;">Step 2: Enter Details & Send</p>
             <input type="text" id="cust-name" placeholder="Your Full Name" required>
-            <input type="tel" id="cust-phone" placeholder="WhatsApp Number" required>
             <input type="text" id="utr-id" placeholder="Payment UTR No. (12 digits)" required>
             
-            <button class="submit-btn" id="submit-btn" onclick="placeOrder()">Confirm & Send Order</button>
-            <span class="close-modal" onclick="closeModal()">Cancel</span>
+            <!-- WhatsApp Send Button -->
+            <button class="submit-btn" onclick="sendOrderToWhatsApp()">
+                Send Order to WhatsApp
+            </button>
+            <span class="close-modal" onclick="closeModal()">Back to Menu</span>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // REPLACE WITH YOUR RESTAURANT WHATSAPP NUMBER (include country code 91)
+        const RESTAURANT_WHATSAPP_NUMBER = "9155745145";
 
-        // Menu Items Data
+        // Advanced Menu Data with Categories
         const menuItems = [
-            { id: 1, name: "Sone Spl. Paneer", price: 270, img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400" },
-            { id: 2, name: "Chicken Biryani", price: 220, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400" },
-            { id: 3, name: "Paneer Butter Masala", price: 200, img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=400" },
-            { id: 4, name: "Chi. Tandoori (F)", price: 450, img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400" },
-            { id: 5, name: "Aloo Dam Banarsi", price: 180, img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400" },
-            { id: 6, name: "Mushroom Masala", price: 230, img: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400" },
-            { id: 7, name: "Chicken Fried Rice", price: 260, img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400" },
-            { id: 8, name: "Butter Naan", price: 80, img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" }
+            { id: 1, name: "Sone Spl. Paneer", price: 270, category: "Paneer", img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400" },
+            { id: 2, name: "Paneer Butter Masala", price: 200, category: "Paneer", img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=400" },
+            { id: 3, name: "Kadai Paneer", price: 230, category: "Paneer", img: "https://images.unsplash.com/photo-1589301773722-e427cc709bc8?w=400" },
+            
+            { id: 4, name: "Chi. Tandoori (F)", price: 450, category: "Chicken", img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400" },
+            { id: 5, name: "Chi. Tandoori (H)", price: 260, category: "Chicken", img: "https://images.unsplash.com/photo-1599487405270-8e102657e28b?w=400" },
+            { id: 6, name: "Chicken Butter Masala", price: 200, category: "Chicken", img: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=400" },
+            { id: 7, name: "Chicken Dehati (F)", price: 550, category: "Chicken", img: "https://images.unsplash.com/photo-1574484284002-952d92456975?w=400" },
+            
+            { id: 8, name: "Chicken Biryani", price: 220, category: "Rice", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400" },
+            { id: 9, name: "Veg. Biryani", price: 170, category: "Rice", img: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400" },
+            { id: 10, name: "Chicken Fried Rice", price: 260, category: "Rice", img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400" },
+            
+            { id: 11, name: "Butter Naan", price: 80, category: "Roti", img: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400" },
+            { id: 12, name: "Garlic Naan", price: 90, category: "Roti", img: "https://images.unsplash.com/photo-1626082895617-1c19b26ad160?w=400" },
+            { id: 13, name: "Tawa Butter Roti", price: 12, category: "Roti", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400" },
+            
+            { id: 14, name: "Paneer Chilly (F)", price: 220, category: "Starter", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400" },
+            { id: 15, name: "Chicken Lollypop (F)", price: 310, category: "Starter", img: "https://images.unsplash.com/photo-1626804475297-4160aae2fa34?w=400" },
+            { id: 16, name: "Mushroom Chilly (F)", price: 250, category: "Starter", img: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400" }
         ];
 
-        let cart = {}; // Store quantities { id: qty }
+        let cart = {}; 
+        let currentFilter = 'All';
 
-        // Render Menu with + / - Logic
         const menuGrid = document.getElementById('menu-grid');
         
         function renderMenu() {
             menuGrid.innerHTML = '';
-            menuItems.forEach(item => {
+            
+            const filteredItems = currentFilter === 'All' 
+                ? menuItems 
+                : menuItems.filter(item => item.category === currentFilter);
+
+            filteredItems.forEach(item => {
                 const qty = cart[item.id] || 0;
                 let controlHTML = '';
                 
@@ -177,75 +221,102 @@
             updateCartUI();
         }
 
+        function filterMenu(category, element) {
+            currentFilter = category;
+            document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            renderMenu();
+        }
+
         function updateCart(id, change) {
             if (!cart[id]) cart[id] = 0;
             cart[id] += change;
             if (cart[id] <= 0) delete cart[id];
-            renderMenu(); // Re-render to show updated buttons
+            renderMenu(); 
         }
 
         function updateCartUI() {
             let totalAmt = 0;
             let totalItems = 0;
+            let summaryHTML = '';
             
             for (const [id, qty] of Object.entries(cart)) {
                 const item = menuItems.find(i => i.id == id);
-                totalAmt += item.price * qty;
+                let itemTotal = item.price * qty;
+                totalAmt += itemTotal;
                 totalItems += qty;
+                
+                summaryHTML += `
+                    <div class="bill-item">
+                        <span>${qty}x ${item.name}</span>
+                        <span>₹${itemTotal}</span>
+                    </div>`;
             }
 
             if (totalItems > 0) {
                 document.getElementById('item-count').innerText = totalItems + " Items";
                 document.getElementById('total-price').innerText = totalAmt;
                 document.getElementById('modal-total').innerText = totalAmt;
+                
+                summaryHTML += `<hr style="margin:10px 0; border:0; border-top:1px solid #ccc;">
+                                <div class="bill-item" style="font-weight:bold; font-size:16px;">
+                                    <span>Grand Total</span><span>₹${totalAmt}</span>
+                                </div>`;
+                document.getElementById('bill-summary-box').innerHTML = summaryHTML;
+                
                 document.getElementById('floating-cart').classList.add('active');
             } else {
                 document.getElementById('floating-cart').classList.remove('active');
             }
         }
 
-        renderMenu(); // Init
+        renderMenu(); // Initial Load
 
         function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        async function placeOrder() {
-            const name = document.getElementById('cust-name').value;
-            const phone = document.getElementById('cust-phone').value;
-            const utr = document.getElementById('utr-id').value;
-            const btn = document.getElementById('submit-btn');
+        // DIRECT WHATSAPP ORDERING SYSTEM (No Database Required)
+        function sendOrderToWhatsApp() {
+            const name = document.getElementById('cust-name').value.trim();
+            const utr = document.getElementById('utr-id').value.trim();
 
-            if(!name || !phone || !utr) { alert("Please fill all details!"); return; }
+            if(!name || !utr) { 
+                alert("Please enter your Name and Payment UTR Number."); 
+                return; 
+            }
 
-            // Generate Order String (e.g. "2x Chicken Biryani, 1x Naan")
-            let orderItemsList = [];
+            // Create Order Message for WhatsApp
+            let orderText = `*NEW ONLINE ORDER* 🚨\n\n`;
+            orderText += `*Customer:* ${name}\n`;
+            orderText += `*Payment UTR:* ${utr}\n\n`;
+            orderText += `*Order Details:*\n`;
+            
             let totalAmt = 0;
             for (const [id, qty] of Object.entries(cart)) {
                 const item = menuItems.find(i => i.id == id);
-                orderItemsList.push(`${qty}x ${item.name}`);
+                orderText += `🔹 ${qty}x ${item.name} (₹${item.price * qty})\n`;
                 totalAmt += item.price * qty;
             }
-            const itemsString = orderItemsList.join(" | ");
+            
+            orderText += `\n*Grand Total:* ₹${totalAmt}\n`;
+            orderText += `\n_Generated via Sone Restaurant App_`;
 
-            btn.innerText = "Processing..."; btn.disabled = true;
-
-            const { data, error } = await supabase.from('orders').insert([
-                { customer_name: name, phone: phone, items: itemsString, total_amount: totalAmt, utr_id: utr }
-            ]);
-
-            if(error) {
-                alert("Error: " + error.message);
-                btn.innerText = "Confirm & Send Order"; btn.disabled = false;
-            } else {
-                document.getElementById('modal-overlay').innerHTML = `
-                    <div class="modal" style="padding: 40px 20px;">
-                        <h1 style="color:#22c55e; font-size:60px; margin-bottom:10px;">✓</h1>
-                        <h2 style="color:#111;">Order Confirmed!</h2>
-                        <p style="color:#666; margin: 15px 0;">Thank you ${name}. We have received your order.</p>
-                        <button class="submit-btn" onclick="location.reload()">Back to Home</button>
-                    </div>`;
-                cart = {}; // Empty cart
-            }
+            // Encode text for URL
+            const encodedText = encodeURIComponent(orderText);
+            
+            // Open WhatsApp
+            const whatsappURL = `https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${encodedText}`;
+            window.open(whatsappURL, '_blank');
+            
+            // Show Success & Clear Cart
+            document.getElementById('modal-overlay').innerHTML = `
+                <div class="modal" style="padding: 40px 20px;">
+                    <h1 style="color:#22c55e; font-size:60px; margin-bottom:10px;">✓</h1>
+                    <h2 style="color:#111;">Order Sent!</h2>
+                    <p style="color:#666; margin: 15px 0;">Thank you ${name}. Your order has been sent to our WhatsApp.</p>
+                    <button class="submit-btn" onclick="location.reload()" style="background:#111;">Back to Home</button>
+                </div>`;
+            cart = {}; 
         }
     </script>
 </body>
