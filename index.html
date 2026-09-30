@@ -2,127 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sone Restaurant Dumraon | Order Online</title>
-    <!-- Supabase JS Library -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sone Restaurant App</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d32f2f">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f8f9fa; color: #333; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background-color: #f4f6f8; color: #333; padding-bottom: 80px; } /* Bottom padding for floating cart */
         
-        /* Navbar & Logo */
-        .navbar { background: #111; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .logo-img { max-height: 70px; width: auto; object-fit: contain; }
+        /* Navbar */
+        .navbar { background: #fff; padding: 10px 20px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .logo-img { height: 50px; width: auto; }
+
+        /* Hero Banner */
+        .hero { position: relative; width: 100%; max-height: 250px; overflow: hidden; }
+        .hero img { width: 100%; height: 100%; object-fit: cover; }
+        .hero-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; text-align: center; }
         
-        /* Hero Section (Front Image) */
-        .hero { width: 100%; max-width: 800px; margin: 0 auto; position: relative; }
-        .hero img { width: 100%; height: auto; display: block; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .hero-text { text-align: center; padding: 20px 10px; }
-        .hero-text h1 { color: #d32f2f; font-size: 28px; }
-        .hero-text p { color: #555; font-size: 14px; font-weight: bold; background: #ffe082; display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 5px; }
+        /* Section Titles */
+        .section-title { text-align: center; margin: 20px 0; font-size: 22px; color: #d32f2f; font-weight: 700; text-transform: uppercase; }
+
+        /* Gallery (Horizontal Scroll) */
+        .gallery { display: flex; overflow-x: auto; gap: 15px; padding: 0 20px 20px 20px; }
+        .gallery::-webkit-scrollbar { display: none; }
+        .gallery img { width: 250px; height: 150px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
         /* Menu Grid */
-        .menu-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 20px; max-width: 1000px; margin: 0 auto; }
-        .menu-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.3s; }
-        .menu-card:hover { transform: translateY(-5px); }
-        .food-img { width: 100%; height: 180px; object-fit: cover; }
-        .menu-info { padding: 15px; text-align: center; }
-        .menu-info h3 { font-size: 18px; margin-bottom: 5px; }
-        .price { color: #d32f2f; font-weight: bold; font-size: 20px; margin-bottom: 15px; display: block; }
-        .add-btn { background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; }
-        .add-btn:active { background: #388e3c; }
+        .menu-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; padding: 0 20px; max-width: 800px; margin: 0 auto; }
+        .menu-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .food-img { width: 100%; height: 120px; object-fit: cover; }
+        .menu-info { padding: 12px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;}
+        .menu-info h3 { font-size: 15px; color: #222; margin-bottom: 5px; }
+        .price { color: #d32f2f; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+        .add-btn { background: #fff; color: #d32f2f; border: 2px solid #d32f2f; padding: 6px 0; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; }
+        .add-btn:active { background: #d32f2f; color: #fff; }
 
-        /* Cart & Payment Section */
-        .cart-section { text-align: center; padding: 20px; background: white; max-width: 600px; margin: 20px auto; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .cart-section h2 { margin-bottom: 15px; }
-        .checkout-btn { background: #ff9800; color: white; border: none; padding: 12px 30px; font-size: 18px; font-weight: bold; border-radius: 25px; cursor: pointer; width: 80%; }
-        .checkout-btn:disabled { background: #aaa; cursor: not-allowed; }
-        
-        .payment-box { display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 20px; }
-        .payment-box input { width: 90%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        .submit-btn { background: #d32f2f; color: white; border: none; padding: 12px; width: 90%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        /* Floating Cart (Bottom) */
+        .floating-cart { position: fixed; bottom: 0; left: 0; width: 100%; background: #d32f2f; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); transform: translateY(100%); transition: transform 0.3s ease-in-out; z-index: 1000; border-top-left-radius: 20px; border-top-right-radius: 20px; }
+        .floating-cart.active { transform: translateY(0); }
+        .cart-info { font-size: 16px; font-weight: 600; }
+        .checkout-btn { background: white; color: #d32f2f; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 700; cursor: pointer; }
+
+        /* Checkout Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal { background: white; width: 90%; max-width: 400px; border-radius: 16px; padding: 20px; text-align: center; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #888; font-weight: bold; }
+        .modal input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins'; }
+        .submit-btn { background: #2e7d32; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar with Logo -->
+    <!-- Service Worker Registration for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => console.log("App Ready to Install"));
+        }
+    </script>
+
+    <!-- Navbar -->
     <div class="navbar">
-        <img src="Sonelogo.png" class="logo-img" alt="Sone Restaurant Logo">
+        <img src="Sonelogo_2.png" class="logo-img" alt="Sone Restaurant">
     </div>
 
-    <!-- Hero Image (Bahar ki photo) -->
+    <!-- Hero Section -->
     <div class="hero">
-        <img src="Sonefront1.png" alt="Sone Restaurant Front">
-    </div>
-    
-    <div class="hero-text">
-        <h1>Welcome to Sone Restaurant</h1>
-        <p>Order Timings: 12:00 PM to 9:00 PM</p>
+        <img src="Sonefront1_2.png" alt="Sone Restaurant Exterior">
+        <div class="hero-overlay">
+            <h2 style="margin-bottom: 5px;">Sone Restaurant</h2>
+            <p style="font-size: 13px;">Order Timings: 12:00 PM to 9:00 PM</p>
+        </div>
     </div>
 
-    <!-- Beautiful Menu Grid -->
+    <!-- Gallery Section (Interior & Party Hall) -->
+    <h2 class="section-title">Our Ambience</h2>
+    <div class="gallery">
+        <img src="Sonein_2.png" alt="Interior Dining">
+        <img src="Partyholl_2.png" alt="Party Hall Decoration">
+        <img src="Sonein1_2.png" alt="Private Cabin Seating">
+    </div>
+
+    <!-- Menu Section (Items from your official menu) -->
+    <h2 class="section-title">Recommended Menu</h2>
     <div class="menu-container">
-        <!-- Item 1 -->
+        
         <div class="menu-card">
-            <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80" class="food-img" alt="Chicken Biryani">
+            <img src="https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80" class="food-img" alt="Sone Spl Paneer">
+            <div class="menu-info">
+                <h3>Sone Spl. Paneer</h3>
+                <span class="price">₹270</span>
+                <button class="add-btn" onclick="addToCart('Sone Spl. Paneer', 270)">+ ADD</button>
+            </div>
+        </div>
+
+        <div class="menu-card">
+            <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80" class="food-img" alt="Chicken Biryani">
             <div class="menu-info">
                 <h3>Chicken Biryani</h3>
                 <span class="price">₹220</span>
-                <button class="add-btn" onclick="addToCart('Chicken Biryani', 220)">Add to Cart</button>
-            </div>
-        </div>
-        
-        <!-- Item 2 -->
-        <div class="menu-card">
-            <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc0?w=500&q=80" class="food-img" alt="Paneer Butter Masala">
-            <div class="menu-info">
-                <h3>Paneer Butter Masala</h3>
-                <span class="price">₹200</span>
-                <button class="add-btn" onclick="addToCart('Paneer Butter Masala', 200)">Add to Cart</button>
+                <button class="add-btn" onclick="addToCart('Chicken Biryani', 220)">+ ADD</button>
             </div>
         </div>
 
-        <!-- Item 3 -->
         <div class="menu-card">
-            <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80" class="food-img" alt="Aloo Dam Banarsi">
+            <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80" class="food-img" alt="Aloo Dam Banarsi">
             <div class="menu-info">
                 <h3>Aloo Dam Banarsi</h3>
                 <span class="price">₹180</span>
-                <button class="add-btn" onclick="addToCart('Aloo Dam Banarsi', 180)">Add to Cart</button>
+                <button class="add-btn" onclick="addToCart('Aloo Dam Banarsi', 180)">+ ADD</button>
             </div>
         </div>
 
-        <!-- Item 4 -->
         <div class="menu-card">
-            <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=500&q=80" class="food-img" alt="Chicken Tandoori">
+            <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&q=80" class="food-img" alt="Chi Tandoori">
             <div class="menu-info">
-                <h3>Chi. Tandoori (H)</h3>
-                <span class="price">₹260</span>
-                <button class="add-btn" onclick="addToCart('Chi. Tandoori (H)', 260)">Add to Cart</button>
+                <h3>Chi. Tandoori (F)</h3>
+                <span class="price">₹450</span>
+                <button class="add-btn" onclick="addToCart('Chi. Tandoori (F)', 450)">+ ADD</button>
             </div>
         </div>
+
     </div>
 
-    <!-- Cart & Payment Section -->
-    <div class="cart-section">
-        <h2>Total Bill: ₹<span id="total-price">0</span></h2>
-        <button id="checkout-btn" class="checkout-btn" onclick="showPayment()">Proceed to Checkout</button>
-        
-        <div class="payment-box" id="payment-section">
-            <h3 style="margin-bottom: 10px;">Pay via UPI</h3>
-            <p style="font-size: 12px; margin-bottom: 15px;">Scan QR, pay the exact amount & enter UTR</p>
-            <!-- Apna QR Code Image Yahan Daalein baad me -->
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="150" style="margin-bottom: 20px;">
+    <!-- Floating Cart -->
+    <div class="floating-cart" id="floating-cart">
+        <div class="cart-info">
+            <span id="item-count">0</span> Items | ₹<span id="total-price">0</span>
+        </div>
+        <button class="checkout-btn" id="checkout-trigger" onclick="openModal()">View Cart ➔</button>
+    </div>
+
+    <!-- Checkout Modal (Pop-up) -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h2 style="color: #d32f2f; margin-bottom: 15px;">Complete Order</h2>
+            <h3 style="margin-bottom: 20px;">Amount to Pay: ₹<span id="modal-total">0</span></h3>
             
-            <input type="text" id="cust-name" placeholder="Aapka Naam" required>
-            <input type="tel" id="cust-phone" placeholder="Mobile Number" required>
-            <input type="text" id="utr-id" placeholder="Payment UTR / Ref No. (12 digits)" required>
+            <p style="font-size: 13px; color: #555; margin-bottom: 10px;">Scan QR & Pay</p>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="130" style="margin-bottom: 15px;">
+            
+            <input type="text" id="cust-name" placeholder="Your Full Name" required>
+            <input type="tel" id="cust-phone" placeholder="Your WhatsApp Number" required>
+            <input type="text" id="utr-id" placeholder="Payment UTR / Reference No." required>
+            
             <button class="submit-btn" id="submit-btn" onclick="placeOrder()">Confirm Order</button>
         </div>
     </div>
 
     <script>
-        // AAPKA SUPABASE CONNECTION (API & KEY)
+        // SUPABASE CONNECTION
         const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -130,32 +161,39 @@
         let total = 0;
         let items = [];
 
-        // 12 PM to 9 PM Timing Check
+        // App Timing Logic (12 PM to 9 PM)
         const hour = new Date().getHours();
         if (hour < 12 || hour >= 21) {
-            const btn = document.getElementById('checkout-btn');
+            const btn = document.getElementById('checkout-trigger');
             btn.disabled = true;
-            btn.innerText = "Closed Now (Order 12 PM-9 PM)";
+            btn.innerText = "Closed (12PM-9PM)";
+            btn.style.background = "#999";
         }
 
         function addToCart(item, price) {
             items.push(item);
             total += price;
+            
+            // Update UI
+            document.getElementById('item-count').innerText = items.length;
             document.getElementById('total-price').innerText = total;
-            // Chhota sa notification (toast) 
-            const btn = event.target;
-            btn.innerText = "Added ✓";
-            btn.style.background = "#2e7d32";
-            setTimeout(() => { btn.innerText = "Add to Cart"; btn.style.background = "#4caf50"; }, 1000);
+            document.getElementById('modal-total').innerText = total;
+            
+            // Show floating cart
+            document.getElementById('floating-cart').classList.add('active');
+            
+            // Haptic feedback for mobile
+            if (navigator.vibrate) navigator.vibrate(50);
         }
 
-        function showPayment() {
-            if(total > 0) {
-                document.getElementById('payment-section').style.display = 'block';
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            } else {
-                alert("Pehle menu se koi dish select karein!");
+        function openModal() {
+            if(total > 0 && !(hour < 12 || hour >= 21)) {
+                document.getElementById('modal-overlay').style.display = 'flex';
             }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
         }
 
         async function placeOrder() {
@@ -165,27 +203,24 @@
             const submitBtn = document.getElementById('submit-btn');
 
             if(!name || !phone || !utr) {
-                alert("Kripya apna Naam, Phone aur UTR jaroor bharein!");
+                alert("Please fill all details correctly.");
                 return;
             }
 
             submitBtn.innerText = "Processing...";
             submitBtn.disabled = true;
 
-            // Supabase Database me data bhejna
-            const { data, error } = await supabase
-                .from('orders')
-                .insert([
-                    { customer_name: name, phone: phone, items: items.join(", "), total_amount: total, utr_id: utr }
-                ]);
+            const { data, error } = await supabase.from('orders').insert([
+                { customer_name: name, phone: phone, items: items.join(", "), total_amount: total, utr_id: utr }
+            ]);
 
             if (error) {
-                alert("Order place karne me error aayi: " + error.message);
+                alert("Error: " + error.message);
                 submitBtn.innerText = "Confirm Order";
                 submitBtn.disabled = false;
             } else {
-                alert("Dhanyawad! Aapka Order safaltapurvak mil gaya hai.");
-                location.reload(); // Page refresh kar dega
+                alert("🎉 Order placed successfully! We will contact you soon.");
+                location.reload();
             }
         }
     </script>
