@@ -1,7 +1,6 @@
 self.addEventListener('install', (e) => {
-  console.log('[Service Worker] Install');
+  console.log('[Service Worker] Installed');
 });
-
 self.addEventListener('fetch', (e) => {
-  // Yeh app ko offline aur fast chalne me madad karta hai
+  // App ko fast aur offline support deta hai
 });
