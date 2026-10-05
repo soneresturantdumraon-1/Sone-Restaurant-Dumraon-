@@ -3,602 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sone Restaurant - Billing & Order App</title>
+    <title>Sone Restaurant - Order Now</title>
     
-    <link rel="icon" type="image/png" href="sonelogo_3.png">
-    <link rel="apple-touch-icon" href="sonelogo_3.png">
-    
-    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="sonelogo1.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Supabase & html2canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
-            --ios-bg: #F2F2F7; --ios-card: #FFFFFF; --ios-text: #1C1C1E; --ios-text-muted: #8E8E93;
-            --ios-orange: #FF9500; --ios-orange-grad: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%);
-            --ios-green: #34C759; --ios-red: #D32F2F; --ios-blue: #007AFF;
-            --ios-input-bg: rgba(118, 118, 128, 0.12); --ios-separator: rgba(60, 60, 67, 0.1);
-            --radius-card: 16px; --radius-btn: 12px; --radius-input: 10px; --shadow-soft: 0 4px 14px rgba(0,0,0,0.05);
+            --bg: #F8F9FA; --card: #FFFFFF; --text: #1C1C1E; --text-muted: #8E8E93;
+            --orange: #FF9500; --orange-grad: linear-gradient(135deg, #e52d27 0%, #b31217 100%); /* Sone Red Theme */
+            --green: #34C759; --red: #FF3B30; --blue: #007AFF;
+            --input-bg: rgba(118, 118, 128, 0.08); --separator: rgba(60, 60, 67, 0.1);
+            --radius: 16px; --shadow: 0 8px 20px rgba(0,0,0,0.06);
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Poppins", sans-serif; margin: 0; background-color: var(--ios-bg); color: var(--ios-text); overflow-x: hidden; scroll-behavior: smooth;}
+        body { font-family: 'Poppins', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent;}
         
-        /* --------------------------
-           1. INITIAL CHOICE SCREEN
-           -------------------------- */
-        #choice-screen { position:fixed; top:0; left:0; width:100vw; height:100vh; background: #fff; z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
-        .choice-logo { width: 180px; margin-bottom: 30px; animation: fadeIn 1s; }
-        .choice-btn { width: 100%; max-width: 320px; padding: 18px; color: white; border: none; border-radius: 15px; font-weight: 700; cursor: pointer; font-size: 18px; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: 0.3s; display:flex; align-items:center; justify-content:center; gap:10px;}
-        .btn-customer { background: linear-gradient(135deg, #D32F2F, #FF5252); }
-        .btn-admin { background: #1C1C1E; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
-
-        /* --------------------------
-           2. CUSTOMER DASHBOARD
-           -------------------------- */
-        #customer-app { display: none; flex-direction: column; width: 100%; min-height: 100vh; background: #f8f9fa; padding-bottom: 100px; }
-        .cust-header { background: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        /* HEADER & SIDEBAR */
+        .top-header { background: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 15px rgba(0,0,0,0.05);}
+        .top-header img { height: 40px; object-fit: contain; }
         
-        /* Photo Gallery */
-        .gallery-scroll { display: flex; overflow-x: auto; gap: 15px; padding: 15px; scroll-snap-type: x mandatory; }
-        .gallery-scroll::-webkit-scrollbar { display: none; }
-        .gallery-img { width: 85vw; max-width: 350px; height: 200px; object-fit: cover; border-radius: 16px; scroll-snap-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-shrink: 0;}
-        
-        .order-banner { background: var(--ios-orange-grad); color: white; padding: 20px; margin: 10px 15px; border-radius: 16px; text-align: center; box-shadow: 0 6px 15px rgba(255, 149, 0, 0.3); }
-        .order-banner h2 { margin: 0 0 5px 0; font-family: 'Montserrat'; font-size: 22px; }
-        .order-banner p { margin: 0; font-size: 13px; opacity: 0.9; }
-
-        /* Customer Menu List */
-        .cust-menu-container { padding: 0 15px; }
-        .cust-menu-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .c-info h4 { margin: 0 0 5px 0; font-size: 15px; color: #222; }
-        .c-info p { margin: 0; color: var(--ios-red); font-weight: 700; font-size: 14px; }
-        
-        .qty-box { display: flex; align-items: center; gap: 10px; background: #fdf2f2; border: 1px solid var(--ios-red); border-radius: 8px; overflow: hidden; }
-        .qty-box button { background: transparent; color: var(--ios-red); border: none; width: 30px; height: 30px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .qty-box span { font-weight: 700; color: #333; min-width: 20px; text-align: center; font-size: 14px;}
-        .c-add-btn { background: white; color: var(--ios-red); border: 1px solid var(--ios-red); padding: 6px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-
-        /* Floating Cart */
-        .c-cart { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 400px; background: var(--ios-red); color: white; padding: 12px 20px; display: none; justify-content: space-between; align-items: center; border-radius: 16px; box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4); z-index: 1000; }
-        .c-cart-btn { background: white; color: var(--ios-red); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; }
-
-        /* Checkout Modal */
-        .c-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: flex-end; z-index: 2000; }
-        .c-modal-content { background: white; width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 25px; text-align: center; max-height: 90vh; overflow-y: auto; }
-        .qr-section { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px dashed #ccc; }
-        .c-input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; background: #fff; font-family: 'Poppins';}
-        .wa-submit-btn { background: #25D366; color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; justify-content: center; gap:10px; align-items: center; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);}
-
-        /* --------------------------
-           3. ADMIN BILLING APP 
-           (Old Code Base)
-           -------------------------- */
-        #login-screen { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background: #f4f5f7; z-index:9999; align-items:center; justify-content:center; padding:20px; }
-        .login-box { background: #ffffff; padding: 40px 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); width: 100%; max-width: 360px; text-align: center; }
-        .login-logo { width: 140px; height: 140px; object-fit: contain; margin: 0 auto 15px auto; display: block; }
-        .login-input { width: 100%; padding: 14px 15px; border: 2px solid #E5E5EA; border-radius: 12px; font-size: 15px; outline: none; margin-bottom:15px; font-family: 'Poppins', sans-serif;}
-        .login-btn { width: 100%; padding: 15px; background: #1C1C1E; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 16px; }
-
-        #app-container { display: none; flex-direction: column; width: 100%; min-height: 100vh; }
-        
-        .top-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--ios-separator); position: sticky; top: 0; z-index: 100; }
-        .brand-banner { text-align:center; margin: 20px 20px 15px; }
-        .brand-banner h1 { font-family: 'Montserrat', sans-serif; font-size:26px; font-weight:800; color:var(--ios-text); margin:0 0 5px 0;}
-        .brand-banner p { font-size:13px; font-weight:500; color:var(--ios-text-muted); margin:0; }
-        .billing-grid { display: flex; gap: 20px; flex-wrap: wrap; margin: 0 20px 20px;}
-        .card { background: var(--ios-card); border-radius: var(--radius-card); padding: 20px; box-shadow: var(--shadow-soft); flex: 1; min-width: 300px; }
-        h3.section-title { margin: 0 0 15px 0; font-size: 18px; color: var(--ios-text); font-weight: 700; border-bottom: 1px solid var(--ios-separator); padding-bottom: 10px; display:flex; align-items:center; gap:8px;}
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--ios-text-muted); }
-        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 12px; border: none; border-radius: var(--radius-input); background: var(--ios-input-bg); box-sizing: border-box; font-size: 16px; font-family: inherit; color: var(--ios-text); }
-        .btn-add { background: var(--ios-blue); color: white; border: none; padding: 14px; border-radius: var(--radius-btn); width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; transition:0.2s; display:flex; justify-content:center; align-items:center; gap:8px;}
-        .autocomplete-container { position: relative; }
-        .autocomplete-items { position: absolute; border: 1px solid var(--ios-separator); z-index: 99; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background-color: var(--ios-card); border-radius: 8px; box-shadow: var(--shadow-soft); }
-        .autocomplete-items div { padding: 12px; cursor: pointer; border-bottom: 1px solid var(--ios-separator); font-size: 14px; display:flex; justify-content:space-between;}
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--ios-separator); }
-        th { color: var(--ios-text-muted); font-weight: 600; background: #f8f9fa; }
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-checkout { background: var(--ios-green); flex: 2; color: white; border: none; padding: 15px; border-radius: var(--radius-btn); font-weight: 600; font-size: 16px; cursor: pointer; display:flex; justify-content:center; align-items:center; gap:8px;}
-        .btn-clear { background: var(--ios-bg); flex: 1; color: var(--ios-red); border: none; padding: 15px; border-radius: var(--radius-btn); font-weight: 600; cursor: pointer; display:flex; justify-content:center; align-items:center; gap:8px;}
-        
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .modal-content { background-color: var(--ios-card); margin: 5% auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px;}
-        
-        .sidebar { width: 260px; background-color: #FFFFFF; position: fixed; height: 100%; left: -260px; top: 0; z-index: 1001; transition: 0.3s; overflow-y:auto; }
+        .sidebar { width: 260px; background-color: #FFFFFF; position: fixed; height: 100%; left: -260px; top: 0; z-index: 1001; transition: 0.3s; overflow-y:auto; box-shadow: 2px 0 15px rgba(0,0,0,0.1);}
         .sidebar.show { left: 0; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; display: none; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; backdrop-filter: blur(3px);}
         .overlay.show { display: block; }
-        .nav-links { list-style: none; padding: 15px 10px; margin: 0; }
-        .nav-links a { display: flex; align-items: center; padding: 12px 15px; color: var(--ios-text); text-decoration: none; font-weight: 500; font-size: 15px; border-radius: var(--radius-btn); cursor: pointer; }
-        .nav-links a.active { background: var(--ios-orange-grad); color: #fff; }
-        .tab-panel { display: none; padding: 10px 20px; }
-        .tab-panel.active { display: block; }
-
-        .bill-container {
-            max-width: 400px; margin: 0 auto; border: 2px dashed #FF9500; padding: 20px; 
-            border-radius: 12px; background: #FFFAEA !important; color: #333; 
-            font-family: 'Poppins', sans-serif; box-shadow: 0 8px 25px rgba(255, 149, 0, 0.15);
-            position: relative; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        }
-        .bill-container::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
-            background: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%) !important;
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        }
-        .bill-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 12px; border-bottom: 2px solid #FFD180; padding-bottom: 8px; color: #D32F2F; }
-        .bill-title { text-align: center; margin: 15px 0; }
-        .bill-title h2 { margin: 0 0 5px 0; font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 800; color: #D32F2F; text-shadow: 1px 1px 0px rgba(0,0,0,0.05); }
-        .bill-info { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; font-weight: 700; color: #444; background: #FFF3E0 !important; padding: 8px 10px; border-radius: 6px; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
-        .print-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 13px; color: #222; }
-        .print-table th, .print-table td { border: 1px solid #FFD180; padding: 8px; }
-        .print-table th { background: linear-gradient(135deg, #FF9500, #FF5E3A) !important; color: white !important; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 600; }
         
-        .bill-totals { margin-top: 15px; font-weight: 700; font-size: 14px; color: #333; }
-        .bill-totals div { display: flex; justify-content: space-between; padding: 5px 10px; }
-        .bill-totals .grand-total { 
-            background: #34C759 !important; color: white !important; 
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
-            border-radius: 6px; margin-top: 8px; padding: 10px; font-size: 16px; 
-            box-shadow: 0 4px 10px rgba(52, 199, 89, 0.3); 
-        }
+        .nav-links { list-style: none; padding: 15px 10px; margin: 0; }
+        .nav-links a { display: flex; align-items: center; padding: 14px 15px; color: var(--text); text-decoration: none; font-weight: 500; font-size: 15px; border-radius: 12px; cursor: pointer; margin-bottom: 5px;}
+        .nav-links a.active { background: var(--orange-grad); color: #fff; box-shadow: 0 4px 12px rgba(229, 45, 39, 0.3);}
+        
+        .tab-panel { display: none; padding: 15px; padding-bottom: 90px; /* Space for FAB */ }
+        .tab-panel.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        #print-area { display: none; }
-        #sync-badge { background: var(--ios-input-bg); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; color: var(--ios-green); transition: 0.3s;}
+        /* DASHBOARD (Photo Gallery) */
+        .dash-section { margin-bottom: 25px; }
+        .dash-section h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; color: #b31217; margin: 0 0 12px 0; border-left: 4px solid #b31217; padding-left: 10px;}
+        
+        .hero-img-container { width: 100%; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 15px; position: relative;}
+        .hero-img-container img { width: 100%; height: 220px; object-fit: cover; display: block;}
+        .hero-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px 15px; color: white; box-sizing: border-box;}
+        
+        .scroll-gallery { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 15px; scroll-snap-type: x mandatory;}
+        .scroll-gallery::-webkit-scrollbar { display: none; }
+        .scroll-item { scroll-snap-align: start; flex-shrink: 0; width: 220px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); background: #fff;}
+        .scroll-item img { width: 100%; height: 140px; object-fit: cover; display: block;}
+        .scroll-item p { padding: 10px; margin: 0; font-size: 13px; font-weight: 600; text-align: center; color: #444;}
 
-        @media print { 
-            @page { margin: 0; size: auto; } 
-            body * { visibility: hidden; } 
-            #print-area, #print-area * { visibility: visible; } 
-            #print-area { 
-                display: flex !important; justify-content: center; position: absolute; 
-                left: 0; top: 0; width: 100%; padding: 15mm 10mm; box-sizing: border-box; background: #fff;
-                -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-            }
-            .bill-container { width: 100%; max-width: 450px; box-shadow: none; }
-        }
+        /* QUICK ORDER FLOATING BUTTON (FAB) */
+        .fab-order { position: fixed; bottom: 25px; right: 20px; background: var(--orange-grad); color: white; border: none; border-radius: 50px; padding: 15px 25px; font-size: 16px; font-weight: 700; box-shadow: 0 10px 25px rgba(229, 45, 39, 0.4); cursor: pointer; display: flex; align-items: center; gap: 10px; z-index: 999; transition: transform 0.2s; }
+        .fab-order:active { transform: scale(0.95); }
+
+        /* BILLING / ORDER UI */
+        .card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px;}
+        .form-group { margin-bottom: 15px; position: relative;}
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--text-muted); }
+        input[type="text"], input[type="number"], input[type="tel"] { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 12px; background: var(--input-bg); box-sizing: border-box; font-size: 15px; font-family: inherit; transition: 0.3s; font-weight:500;}
+        input:focus { border-color: #b31217; background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(179, 18, 23, 0.1); }
+        
+        .btn-add { background: #1C1C1E; color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; display:flex; justify-content:center; align-items:center; gap:8px;}
+        
+        .autocomplete-items { position: absolute; border: 1px solid #eee; z-index: 99; top: 100%; left: 0; right: 0; max-height: 220px; overflow-y: auto; background-color: var(--card); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .autocomplete-items div { padding: 14px 15px; cursor: pointer; border-bottom: 1px solid #f5f5f5; font-size: 14px; display:flex; justify-content:space-between; font-weight:500;}
+        .autocomplete-items div:active { background: #f9f9f9; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px dashed var(--separator); }
+        th { color: var(--text-muted); font-weight: 600; }
+        
+        .btn-checkout { background: var(--green); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%; display:flex; justify-content:center; align-items:center; gap:8px; box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3);}
+        
+        /* MODAL (QR & Checkout) */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background-color: var(--card); margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
+        
+        .qr-box { text-align: center; padding: 15px; background: #fff; border-radius: 16px; margin-bottom: 15px; border: 2px dashed #b31217; }
+        .qr-box img { width: 200px; height: 200px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;}
+        
+        .history-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
     </style>
 </head>
 <body>
 
-    <!-- 1. CHOOSE APP SCREEN (STARTING SCREEN) -->
-    <div id="choice-screen">
-        <img src="sonelogo_3.png" alt="Sone Logo" class="choice-logo">
-        <h2 style="font-family: 'Montserrat'; color: #1C1C1E; margin-bottom: 30px; text-align: center;">Welcome to<br>Sone Restaurant</h2>
-        
-        <button class="choice-btn btn-customer" onclick="openCustomerApp()">
-            <i class="fas fa-utensils"></i> ORDER ONLINE
-        </button>
-        
-        <p style="font-size: 12px; color: #8E8E93; margin-bottom: 20px;">(For Customers)</p>
-        
-        <button class="choice-btn btn-admin" onclick="openAdminLogin()">
-            <i class="fas fa-lock"></i> ADMIN PANEL
-        </button>
-        <p style="font-size: 12px; color: #8E8E93;">(Staff Only)</p>
+    <!-- SIDEBAR -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div style="padding: 30px 20px; text-align: center; border-bottom: 1px solid #eee;">
+            <img src="sonelogo1.png" alt="Logo" style="width: 120px; object-fit: contain; margin-bottom: 10px;">
+        </div>
+        <ul class="nav-links">
+            <li><a class="active" onclick="openTab('dashboardTab', this)"><i class="fas fa-home" style="margin-right:15px; width:20px;"></i> Home</a></li>
+            <li><a onclick="openTab('billingTab', this)"><i class="fas fa-utensils" style="margin-right:15px; width:20px;"></i> Order Food</a></li>
+            <li><a onclick="openTab('historyTab', this)"><i class="fas fa-receipt" style="margin-right:15px; width:20px;"></i> My Orders</a></li>
+        </ul>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- 2. CUSTOMER ORDER APP (NO DATABASE REQUIRED, ONLY WHATSAPP)               -->
-    <!-- ========================================================================= -->
-    <div id="customer-app">
-        <div class="cust-header">
-            <img src="sonelogo1_3.png" alt="Logo" style="height: 40px;">
-            <span style="background: #E8F5E9; color: #2E7D32; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">🟢 Open</span>
-        </div>
+    <!-- HEADER -->
+    <div class="top-header">
+        <button onclick="toggleSidebar()" style="background:transparent; border:none; font-size:24px; color:#1C1C1E; cursor:pointer;"><i class="fas fa-bars"></i></button>
+        <img src="sonelogo1.png" alt="Sone Restaurant">
+        <div style="width: 24px;"></div>
+    </div>
 
-        <!-- Dashboard Image Gallery -->
-        <div class="gallery-scroll">
-            <img src="sonfront_2.png" class="gallery-img" alt="Front">
-            <img src="sonein1_2.png" class="gallery-img" alt="Cabin">
-            <img src="partyhall1_2.png" class="gallery-img" alt="Party Hall">
-            <img src="sonein_2.png" class="gallery-img" alt="Interior">
-        </div>
+    <!-- QUICK ORDER FAB -->
+    <button class="fab-order" id="quickOrderBtn" onclick="openTab('billingTab', document.querySelectorAll('.nav-links a')[1])">
+        <i class="fas fa-shopping-cart"></i> Quick Order
+    </button>
 
-        <div class="order-banner">
-            <h2>Fast & Secure Ordering</h2>
-            <p>Direct to our WhatsApp. Pay -> Order -> Enjoy!</p>
-        </div>
-
-        <h3 style="padding: 0 15px 10px; font-family:'Montserrat';">Our Premium Menu</h3>
+    <!-- 1. DASHBOARD TAB -->
+    <div id="dashboardTab" class="tab-panel active">
         
-        <!-- Menu List -->
-        <div class="cust-menu-container" id="cust-menu-list">
-            <!-- Items injected via JS -->
-        </div>
-
-        <!-- Floating Cart -->
-        <div class="c-cart" id="c-cart">
-            <div>
-                <div id="c-item-count" style="font-size: 12px; opacity: 0.9;">0 Items</div>
-                <div style="font-size: 18px; font-weight: 700;">₹<span id="c-total">0</span></div>
+        <div class="dash-section">
+            <h2>Welcome to Sone</h2>
+            <div class="hero-img-container">
+                <!-- Using sonfront.png for the main hero image -->
+                <img src="sonfront.png" alt="Restaurant Front">
+                <div class="hero-overlay">
+                    <h3 style="margin:0 0 5px 0; font-size:20px; font-family:'Montserrat';">Sone Restaurant</h3>
+                    <p style="margin:0; font-size:12px; opacity:0.9;"><i class="fas fa-map-marker-alt"></i> Dumraon Station Road</p>
+                </div>
             </div>
-            <button class="c-cart-btn" onclick="openCustModal()">Proceed ➔</button>
         </div>
 
-        <!-- Checkout Modal (WhatsApp Order) -->
-        <div class="c-modal" id="c-modal">
-            <div class="c-modal-content">
-                <h2 style="font-family:'Montserrat'; margin: 0 0 10px;">Order Summary</h2>
-                <div id="c-bill-summary" style="text-align: left; background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px; font-size:14px; color:#444;"></div>
-                
-                <h1 style="color:var(--ios-red); margin: 0 0 15px;">Pay: ₹<span id="c-modal-total">0</span></h1>
-                
-                <div class="qr-section">
-                    <p style="margin:0 0 10px; font-weight:700; font-size:13px; color:#666;">Step 1: Scan & Pay Exactly ₹<span id="c-qr-amt">0</span></p>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" width="130" style="border-radius: 8px;">
+        <div class="dash-section">
+            <h2>Our Ambience</h2>
+            <div class="scroll-gallery">
+                <div class="scroll-item">
+                    <!-- Using sonein.png -->
+                    <img src="sonein.png" alt="Dining Area">
+                    <p>Cozy Dining</p>
                 </div>
-
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <p style="margin:0 0 5px; font-weight:700; font-size:13px; color:#666;">Step 2: Enter Details</p>
-                    <input type="text" id="c-name" class="c-input" placeholder="Your Full Name" required>
-                    <input type="text" id="c-utr" class="c-input" placeholder="Payment UTR Number (12 Digits)" required>
+                <div class="scroll-item">
+                    <!-- Using sonein1.png -->
+                    <img src="sonein1.png" alt="Private Cabins">
+                    <p>Private Cabins</p>
                 </div>
+                <div class="scroll-item">
+                    <!-- Using sonefront1.png -->
+                    <img src="sonefront1.png" alt="Exterior">
+                    <p>Beautiful Exterior</p>
+                </div>
+            </div>
+        </div>
 
-                <button class="wa-submit-btn" onclick="sendToWhatsApp()">
-                    <i class="fab fa-whatsapp" style="font-size: 20px;"></i> Send Order & Payment Receipt
-                </button>
-                <p style="margin-top:15px; color:#888; font-weight:bold; cursor:pointer;" onclick="closeCustModal()">Cancel</p>
+        <div class="dash-section">
+            <h2>Party Hall Booking</h2>
+            <div class="scroll-gallery">
+                <div class="scroll-item" style="width: 260px;">
+                    <!-- Using partyhall.png -->
+                    <img src="partyhall.png" alt="Birthday Party Hall">
+                    <p>Spacious Celebration Hall</p>
+                </div>
+                <div class="scroll-item" style="width: 260px;">
+                    <!-- Using partyhall1.png -->
+                    <img src="partyhall1.png" alt="Party Decoration">
+                    <p>Premium Decorations</p>
+                </div>
             </div>
         </div>
     </div>
 
-
-    <!-- ========================================================================= -->
-    <!-- 3. ADMIN BILLING APP (OLD SYSTEM WITH NEW JWT TOKEN)                      -->
-    <!-- ========================================================================= -->
-    <div id="login-screen">
-        <div class="login-box">
-            <img src="sonelogo1_3.png" alt="Sone Logo" class="login-logo">
-            <p style="color: #D32F2F; margin: 0 0 30px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">Admin Billing System</p>
+    <!-- 2. BILLING / ORDER TAB -->
+    <div id="billingTab" class="tab-panel">
+        <div class="card">
+            <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; color:#b31217;">
+                <i class="fas fa-search"></i> Find Your Dish
+            </h3>
+            <div class="form-group">
+                <label>Search Item (नाम लिखें)</label>
+                <input type="text" id="itemInput" placeholder="Ex: Paneer, Mutton, Thanda..." autocomplete="off">
+                <div id="autocompleteList" class="autocomplete-items"></div>
+            </div>
             
-            <input type="email" id="login-email" placeholder="Email Address" class="login-input">
-            <input type="password" id="login-password" placeholder="Password" class="login-input">
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Price (₹)</label>
+                    <input type="number" id="priceInput" readonly style="background: #f0f0f0; color:#888;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Qty (1, 2, H, FH)</label>
+                    <input type="text" id="qtyInput" value="1">
+                </div>
+            </div>
+            <button class="btn-add" onclick="addItemToBill()"><i class="fas fa-plus"></i> Add to Cart</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; border-bottom: 2px solid #eee; padding-bottom:10px;">
+                <i class="fas fa-shopping-basket" style="color:var(--orange);"></i> Your Cart
+            </h3>
             
-            <button onclick="loginUser()" class="login-btn">LOGIN SECURELY</button>
-            <button onclick="backToChoice()" style="background:transparent; border:none; color:#888; margin-top:15px; font-weight:bold; cursor:pointer;">← Back</button>
-            <p id="login-error" style="color: #D32F2F; font-size: 13px; margin-top: 15px; font-weight: 600;"></p>
+            <div style="overflow-y:auto; max-height:250px; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
+                <table id="billTable">
+                    <thead><tr><th>Item Name</th><th>Qty</th><th>Total</th><th style="text-align:center;">Del</th></tr></thead>
+                    <tbody id="billBody">
+                        <tr><td colspan='4' style='text-align:center; color:#888; padding:20px;'>Cart khali hai</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:22px; font-weight:800; margin-bottom: 20px;">
+                <span>Total:</span><span style="color:var(--green);">₹ <span id="grandTotal">0</span></span>
+            </div>
+            <button class="btn-checkout" onclick="openCheckoutModal()">Proceed to Pay <i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
 
-    <!-- MAIN ADMIN APP CONTAINER (OLD HTML) -->
-    <div id="app-container">
-        <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
-        <div class="sidebar" id="sidebar">
-            <div style="padding: 20px; text-align: center; border-bottom: 1px solid #eee;">
-                <img src="sonelogo1_3.png" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px;">
-                <h2 style="margin:0; font-family:'Montserrat'; font-size:18px;">SONE RESTAURANT</h2>
-            </div>
-            <ul class="nav-links">
-                <li><a class="active" onclick="openTab('billingTab', this)"><i class="fas fa-receipt" style="margin-right:10px;"></i> Bill Receipt</a></li>
-                <li><a onclick="openTab('historyTab', this)"><i class="fas fa-history" style="margin-right:10px;"></i> History</a></li>
-                <li><a onclick="openTab('menuUpdateTab', this)"><i class="fas fa-edit" style="margin-right:10px;"></i> Menu Update</a></li>
-                <li><a onclick="openTab('recycleBinTab', this)"><i class="fas fa-trash-restore" style="margin-right:10px;"></i> Recycle Bin</a></li>
-                <li><a onclick="openTab('backupRestoreTab', this)"><i class="fas fa-cloud-download-alt" style="margin-right:10px;"></i> Manual Backup</a></li>
-                <li style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-                    <a onclick="logoutUser()" style="color: var(--ios-red); font-weight: 600; cursor: pointer;"><i class="fas fa-sign-out-alt" style="margin-right:10px; color:var(--ios-red);"></i> Logout</a>
-                </li>
-            </ul>
-        </div>
-
-        <div class="top-header">
-            <button onclick="toggleSidebar()" style="background:transparent; border:none; font-size:22px; color:#1C1C1E; cursor:pointer;"><i class="fas fa-bars"></i></button>
-            <div style="display: flex; gap:10px; align-items: center;">
-                <div id="sync-badge"><i class="fas fa-cloud-check"></i> Online</div>
-                <div style="font-weight: 600; color: var(--ios-text-muted); font-size:14px;"><i class="far fa-calendar-alt"></i> <span id="displayDate"></span></div>
+    <!-- 3. MY ORDERS TAB -->
+    <div id="historyTab" class="tab-panel">
+        <div class="card">
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color:#b31217;">
+                <i class="fas fa-history"></i> My Order History
+            </h3>
+            <p style="font-size:12px; color:#888; margin-top:0;">(Sirf aapke is phone ka data)</p>
+            
+            <div id="customerHistoryContainer" style="margin-top: 15px;">
+                <!-- Orders inject here -->
             </div>
         </div>
-        
-        <div class="brand-banner">
-            <img src="sonelogo1_3.png" alt="Sone Logo" style="height: 70px; object-fit: contain; margin-bottom: 5px;">
-            <h1 style="margin-top: 5px;">SONE RESTAURANT</h1>
-            <p><i class="fas fa-map-marker-alt" style="color:#D32F2F;"></i> Dumraon Station Road, Dumraon</p>
-        </div>
+    </div>
 
-        <!-- BILLING TAB -->
-        <div id="billingTab" class="tab-panel active">
-            <div class="billing-grid">
-                <div class="card">
-                    <h3 class="section-title"><i class="fas fa-search" style="color:var(--ios-blue);"></i> Add Item</h3>
-                    <div class="form-group autocomplete-container">
-                        <label>Item Name (सर्च करें)</label>
-                        <input type="text" id="itemInput" placeholder="उदा: Mutton, Water..." autocomplete="off">
-                        <div id="autocompleteList" class="autocomplete-items"></div>
-                    </div>
-                    <div class="form-group"><label>Full Price (₹)</label><input type="number" id="priceInput" readonly style="opacity: 0.7;"></div>
-                    <div class="form-group">
-                        <label>Quantity (नंबर लिखें, हाफ के लिए 'H', फुल+हाफ के लिए 'FH')</label>
-                        <input type="text" id="qtyInput" value="1" placeholder="Ex: 1, 2, H, FH">
-                    </div>
-                    <button class="btn-add" style="background:#1C1C1E;" onclick="addItemToBill()"><i class="fas fa-plus"></i> Add to Bill</button>
-                </div>
-
-                <div class="card" style="display:flex; flex-direction:column;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--ios-separator); padding-bottom:10px; margin-bottom:10px;">
-                        <h3 style="margin:0; font-size: 18px; color: var(--ios-text); font-weight: 700; display:flex; align-items:center; gap:8px;">
-                            <i class="fas fa-file-invoice" style="color:var(--ios-orange);"></i> Current Bill
-                        </h3>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <label style="margin:0; font-weight:bold; color:var(--ios-text-muted); font-size:13px;">Bill No:</label>
-                            <input type="number" id="manualBillNo" value="1" style="width:60px; padding:6px; text-align:center; border:1px solid #ccc; border-radius:6px; font-weight:bold; background:var(--ios-input-bg);">
-                        </div>
-                    </div>
-                    
-                    <div style="overflow-y:auto; max-height:250px; margin-bottom:15px; border-bottom:1px solid #ccc;">
-                        <table id="billTable">
-                            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th style="text-align:center;">Action</th></tr></thead>
-                            <tbody id="billBody"></tbody>
-                        </table>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:auto;">
-                        <span>Grand Total:</span><span style="color:var(--ios-green);">₹ <span id="grandTotal">0</span></span>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-clear" onclick="clearBill()"><i class="fas fa-trash-alt"></i> Clear</button>
-                        <button class="btn-checkout" onclick="openCheckoutModal()"><i class="fas fa-print"></i> Print</button>
-                    </div>
-                </div>
+    <!-- CHECKOUT MODAL WITH QR -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <div style="text-align: right;"><i class="fas fa-times" style="font-size:24px; color:#888; cursor:pointer;" onclick="closeModal()"></i></div>
+            <h3 style="margin: -15px 0 15px 0; text-align: center; color:#1C1C1E; font-family:'Montserrat';">Payment Details</h3>
+            
+            <div class="qr-box">
+                <!-- Using the provided qr.png for PhonePe -->
+                <img src="qr.png" alt="Scan QR Code to Pay">
+                <p style="margin:0; font-weight: 600; color: #555;">Scan to Pay</p>
+                <div style="color:var(--green); font-size:28px; font-weight:800; font-family:'Montserrat'; margin-top:5px;">₹ <span id="modalGrandTotal">0</span></div>
             </div>
-        </div>
 
-        <!-- History, Menu Update, Recycle Bin, Backup Tabs (SAME AS BEFORE) -->
-        <div id="historyTab" class="tab-panel"><div class="card"><h3 class="section-title"><i class="fas fa-history" style="color:var(--ios-blue);"></i> आज का हिसाब</h3><input type="date" id="filterDate" onchange="loadHistory()" style="padding:10px; margin-bottom:15px; width:100%; border:none; background:var(--ios-input-bg); border-radius:10px; font-family:inherit;"><div style="overflow-y:auto; max-height:400px;"><table><thead><tr><th>Bill No.</th><th>Total</th><th style="text-align:center;">Action</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></div>
-        <div id="menuUpdateTab" class="tab-panel"><div class="card"><h3 class="section-title"><i class="fas fa-plus-circle" style="color:var(--ios-green);"></i> Add / Edit Menu Item</h3><div class="form-group"><label>Item Name</label><input type="text" id="newMenuName" placeholder="Ex: Chicken Lollypop"></div><div class="form-group"><label>Price (₹)</label><input type="number" id="newMenuPrice" placeholder="Ex: 250"></div><button class="btn-add" style="background:#1C1C1E;" onclick="saveMenuItem()"><i class="fas fa-save"></i> Save Item</button><button class="btn-checkout" style="margin-top:15px; width:100%; border:none; background:var(--ios-green);" onclick="makeMenuPermanent()"><i class="fas fa-lock"></i> Save Current Menu as Original</button><button class="btn-clear" style="margin-top:10px; width:100%; border:1px solid var(--ios-red);" onclick="restoreDefaultMenu()"><i class="fas fa-sync"></i> Restore Original Menu</button></div><div class="card" style="margin-top:20px;"><h3 class="section-title"><i class="fas fa-list" style="color:var(--ios-orange);"></i> All Menu Items</h3><div style="display:flex; gap:10px; margin-bottom:10px;"><input type="text" id="searchMenu" onkeyup="filterMenuTable()" placeholder="Menu me khojein..." style="padding:10px; flex:1; border:1px solid #ddd; border-radius:8px; font-family:inherit;"><button class="btn-checkout" style="padding:10px; font-size:14px; background:var(--ios-blue);" onclick="downloadMenuPhoto()"><i class="fas fa-image"></i> Photo</button></div><div style="overflow-y:auto; max-height:400px;"><table id="menuUpdateTable"><thead><tr><th>Item Name</th><th>Price</th><th style="text-align:center;">Action</th></tr></thead><tbody id="menuUpdateBody"></tbody></table></div></div></div>
-        <div id="recycleBinTab" class="tab-panel"><div class="card"><h3 class="section-title"><i class="fas fa-trash-restore" style="color:var(--ios-red);"></i> Recycle Bin</h3><div style="overflow-y:auto; max-height:400px;"><table><thead><tr><th>Bill No.</th><th>Total</th><th style="text-align:center;">Action</th></tr></thead><tbody id="trashBody"></tbody></table></div></div></div>
-        <div id="backupRestoreTab" class="tab-panel"><div class="card"><h3 class="section-title"><i class="fas fa-cloud-download-alt" style="color:var(--ios-blue);"></i> Data Transfer</h3><div style="margin-top:20px; padding:15px; border:1px solid var(--ios-separator); border-radius:10px;"><h4>1. Backup Banayein</h4><button class="btn-checkout" onclick="exportBackup()"><i class="fas fa-download"></i> Download Backup File</button></div><div style="margin-top:20px; padding:15px; border:1px solid var(--ios-separator); border-radius:10px;"><h4>2. Restore Karein</h4><input type="file" id="importFile" accept=".json" style="margin-bottom:10px;"><button class="btn-add" style="background:#1C1C1E;" onclick="importBackup()"><i class="fas fa-upload"></i> Restore Data</button></div></div></div>
-
-        <!-- CHECKOUT MODAL -->
-        <div id="checkoutModal" class="modal">
-            <div class="modal-content">
-                <h3 style="margin: 0 0 10px 0; text-align: center; color:var(--ios-text); font-family:'Montserrat';">Complete Payment</h3>
-                <div style="text-align: center; font-size: 28px; font-weight: 800; color: var(--ios-green); margin-bottom: 20px;">₹ <span id="modalGrandTotal">0</span></div>
-                <div class="form-group"><label>Customer Name (उधार के लिए)</label><input type="text" id="chkName" placeholder="नाम लिखें (Optional)"></div>
-                <div class="modal-grid">
-                    <div class="form-group"><label>Cash Paid</label><input type="number" id="chkCash" oninput="calcUdhaar()"></div>
-                    <div class="form-group"><label>Online Paid</label><input type="number" id="chkOnline" value="0" oninput="calcUdhaar()"></div>
-                </div>
-                <div class="form-group"><label>Discount</label><input type="number" id="chkDiscount" value="0" oninput="calcUdhaar()"></div>
-                <div id="udhaarAlert" style="display:none; text-align:center; font-weight:bold; color:var(--ios-red); margin-bottom:15px;">Balance (उधार): ₹ <span id="chkUdhaar">0</span></div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-clear" onclick="document.getElementById('checkoutModal').style.display='none'" style="flex:1;">Cancel</button>
-                    <button class="btn-checkout" onclick="confirmCheckout()" style="flex:1;"><i class="fas fa-check-circle"></i> Save</button>
-                </div>
+            <div class="form-group">
+                <label>Your Name (नाम)</label>
+                <input type="text" id="custName" placeholder="Aapka naam">
             </div>
-        </div>
-
-        <!-- PREVIEW MODAL -->
-        <div id="previewModal" class="modal">
-            <div class="modal-content" style="max-width: 440px; background: #f8f9fa;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h3 style="margin:0; font-family:'Montserrat';"><i class="fas fa-eye" style="color:var(--ios-blue);"></i> Bill Preview</h3>
-                    <i class="fas fa-times" style="font-size:20px; color:#aaa; cursor:pointer;" onclick="closePreviewModal()"></i>
-                </div>
-                <div id="previewReceiptBox" style="margin-bottom: 20px; max-height: 50vh; overflow-y: auto; border: 1px solid #eee; padding: 5px;"></div>
-                
-                <button class="btn-clear" style="width:100%; margin-bottom:10px; border:1px solid var(--ios-blue); color:var(--ios-blue); background:#e6f2ff;" onclick="editExistingBill()"><i class="fas fa-edit"></i> Edit Bill</button>
-                <button class="btn-add" style="width:100%; margin-bottom:10px; background:#1C1C1E;" onclick="downloadBillImage()"><i class="fas fa-image"></i> Download Photo</button>
-                <button class="btn-checkout" style="width:100%;" onclick="printFromPreview()"><i class="fas fa-print"></i> Print Bill</button>
+            <div class="form-group">
+                <label>Phone No. (मोबाइल)</label>
+                <input type="tel" id="custPhone" placeholder="10 Digit Number" maxlength="10">
             </div>
+            
+            <button class="btn-checkout" onclick="placeOrderAndWhatsApp()" style="background: #25D366; margin-top:10px;">
+                <i class="fab fa-whatsapp" style="font-size: 22px;"></i> Send on WhatsApp
+            </button>
         </div>
-        <div id="print-area"></div>
-    </div> 
+    </div>
 
-    <!-- ==========================================
-         JAVASCRIPT CODE
-         ========================================== -->
     <script>
-        // 1. Navigation Logic
-        function openCustomerApp() {
-            document.getElementById('choice-screen').style.display = 'none';
-            document.getElementById('customer-app').style.display = 'flex';
-            loadCustomerMenu();
-        }
-
-        function openAdminLogin() {
-            document.getElementById('choice-screen').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex';
-        }
-
-        function backToChoice() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('choice-screen').style.display = 'flex';
-        }
-
-        // 2. SUPABASE (New Key Updated)
+        // Supabase DB Connection (Using your API Key)
         const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const RESTAURANT_WHATSAPP_NUMBER = '919155745145'; 
 
-        // 3. CUSTOMER APP LOGIC (Privacy Maintained, Local Variables)
-        const WHATSAPP_NUMBER = "9155745145"; 
-        let cCart = {};
-
-        // Ye menu direct original menu object se connect kiya hai
-        const defaultMenuData = {
-            "Mutton Spl. (8 Pic)": 650, "Mutton Estu (2 Pic)": 220, "Mutton Curry (4 Pic)": 300, "Mutton Do Pyaza (4 Pic)": 320,
-            "Veg. Fried Rice": 170, "Egg Fried Rice": 190, "Chi. Fried Rice": 260, "Mix. Fried Rice": 270, "Paneer Fried Rice": 250,
-            "Paneer Chilly (F)": 220, "Paneer Chilly (H)": 140, "Chi. Chilly (B/L) (F)": 290, "Chi. Lolliop (B/L) (F)": 310, "Mushroom Chilly (F)": 250,
-            "Fish Fry": 140, "Fish Curry": 150, "Chi. Butter Masala": 200, "Chi. Dehati (F)": 550, "Chi. Sone Spl. (F)": 570, "Chi. Sone Spl. (H)": 340,
-            "Butter Naan": 80, "T. Paratha": 70, "Plain Kulcha": 80, "Masala Kulcha": 110, "Garlic Naan": 90,
-            "Jeera Rice": 110, "Veg. Pulao": 150, "Chicken Biryani": 220, "Veg. Biryani": 170,
-            "Chi. Tandoori (F)": 450, "Paneer Tikka": 250, "Chi. Tikka": 270,
-            "Sone Spl. Paneer": 270, "Paneer Butter Masala": 200, "Paneer Do Pyaza": 190, "Shahi Paneer": 210, "Palak Paneer": 170,
-            "Mushroom Do Piyaza": 220, "Mushroom Masala": 230, "Mushroom Karahi": 240,
-            "Chicken Chowmein": 270, "Paneer Chowmein": 240, "Mix Chowmein": 260
+        // FULL MENU EXTRACTED FROM sonemenu.png
+        const menuData = {
+            "Aloo Dam Banarsi": 180, "Aloo Dam Kashmiri": 190, "Aloo Do Payaza": 140, "Aloo Govi": 130, "Aloo Matar": 130, "Aloo Palak": 130, "Aloo Paneer": 150, "Aloo Paratha": 70, "Aloo Parwal": 130, 
+            "Baby Corn Crispry": 270, "Boondi Raita": 110, "Boondi Raita ( H )": 70, "Butter Naan": 80, "Butter Roti": 15, 
+            "Chi. Butter Masala": 200, "Chi. Chilly (B) (F)": 230, "Chi. Chilly (B) (H)": 150, "Chi. Chilly (B/L) (F)": 290, "Chi. Chilly (B/L) (H)": 170, "Chi. Curry": 160, "Chi. Dehati (F)": 550, "Chi. Dehati (H)": 320, "Chi. Do Payaza": 180, "Chi. Estu": 190, "Chi. Fried Rice": 260, "Chi. Ginger Kabab": 260, "Chi. Goli Kabab": 260, "Chi. Karahi": 220, "Chi. Kasha (F)": 510, "Chi. Kurma": 210, "Chi. Leg Kabab": 280, "Chi. Lolliop (B/L) (F)": 310, "Chi. Manchurian": 280, "Chi. Masala": 200, "Chi. Moglai": 210, "Chi. Moglai Paratha": 190, "Chi. Murg Mussalam": 560, "Chi. Noorani": 230, "Chi. Pasanda": 220, "Chi. Reshmi Kabab": 280, "Chi. Shahi Kurma": 210, "Chi. Sone Spl. (F)": 570, "Chi. Sone Spl. (H)": 340, "Chi. Tandoori (F)": 450, "Chi. Tandoori (H)": 260, "Chi. Tikka": 270, "Chi. Tikka Butter Masala": 330, 
+            "Chicken Biryani": 220, "Chicken Chowmein": 270, "Chicken Cream Soup": 140, "Chicken Cutlete": 200, "Chicken Fry": 160, "Chicken Hot & Source Soup": 170, "Chicken Manchow Soup": 150, "Chicken Pakora": 260, "Chicken Pulao": 230, "Chicken Roll": 230, "Cholla Bhatura": 110, "Coffee": 45, "Curd": 80, 
+            "Dal Butter Fry": 130, "Dal Fry": 110, "Dal Makhani": 140, "Dal Moglai": 160, "Dal Tarka": 120, 
+            "Egg Biryani": 190, "Egg Bugiya": 80, "Egg Butter Masala": 140, "Egg Chowmein": 230, "Egg Do Payaza": 120, "Egg Fried Rice": 190, "Egg Masala": 150, "Egg Pakora": 160, "Egg. Curry": 110, "Egg. Roll": 150, 
+            "Finger Chips": 130, "Fish Curry": 150, "Fish Do Pyaza": 150, "Fish Estu": 160, "Fish Fry": 140, "Fish Masala": 160, "Fresh Paneer": 200, "Fruit Cream": 90, "Garlic Naan": 90, "Govi Pakora": 140, "Green Salad- L": 110, "Green Salad- S": 70, 
+            "Jeera Rice": 110, "Jeera Rice (H)": 70, "Jeera thanda 20": 20, "Kaju Paneer": 300, "Kalajamun": 25, "Khir": 80, "Malai Kofta": 210, "Masala Kulcha": 110, "Matar Paneer": 150, "Mix Chowmein": 260, "Mix Vegetable": 150, "Mix. Fried Rice": 270, 
+            "Mushroom (B) Masala": 230, "Mushroom (H)": 160, "Mushroom Chilly (F)": 250, "Mushroom Chilly (H)": 150, "Mushroom Chowmein": 250, "Mushroom Curry": 210, "Mushroom Dehati": 300, "Mushroom Dehati (H)": 160, "Mushroom Do Piyaza": 220, "Mushroom Estu": 220, "Mushroom Fried Rice": 250, "Mushroom Karahi": 240, "Mushroom Masala": 230, 
+            "Mutton Curry (4 Pic)": 300, "Mutton Do Pyaza (4 Pic)": 320, "Mutton Estu (2 Pic)": 220, "Mutton Spl. (12 Pic) F+H": 980, "Mutton Spl. (8 Pic)": 650, 
+            "Naan": 60, "Omlete": 60, "Omlete Curry": 120, "Onion Fry Rice": 120, "Onion Pakora": 150, "Palak Paneer": 170, 
+            "Paneer Bhujiya": 210, "Paneer Butter Masala": 200, "Paneer Chilly (F)": 220, "Paneer Chilly (H)": 140, "Paneer Chowmein": 240, "Paneer Dehati (F)": 290, "Paneer Dehati (H)": 160, "Paneer Diwani": 250, "Paneer Do Pyaza": 190, "Paneer Estu": 210, "Paneer Fried Rice": 250, "Paneer Goli Kabab": 250, "Paneer Karahi": 230, "Paneer Karahi (H)": 140, "Paneer Masala": 200, "Paneer Pakora": 240, "Paneer Paratha": 110, "Paneer Pasanda": 220, "Paneer Punjabi": 250, "Paneer Sandwich": 130, "Paneer Shahi Kurma": 230, "Paneer Stuff Naan": 140, "Paneer Stuff Paratha": 110, "Paneer Tikka": 250, "Paneer biryani": 240, 
+            "Pappad Masala": 120, "Peanut": 120, "Peanut Masala": 150, "Pease Pulao": 140, "Plain Dal": 90, "Plain Kulcha": 80, "Plain Rice": 100, "Plain Rice (H)": 60, "Rasgulla": 20, "Roti": 12, "Seasonal Veg. Bhujiya": 120, "Shahi Naan": 130, "Shahi Paneer": 210, "Shahi Paratha": 130, "Sone Shahi Paratha": 140, "Sone Special Pulao": 210, "Sone Spl. Paneer": 270, "Sone Spl. Paneer (F+H)": 430, "Sone Spl. Paneer Chat-Patta": 250, "Sone Spl. Veg.": 180, "Stuff Capssicam": 160, "Stuff Tomato": 160, "Sweet Corn Crispy": 110, "T. Paratha": 70, "Tawa Butter Roti": 12, "Tawa Roti": 10, "Tea Spl.": 20, 
+            "Thanda 40": 40, "Thanda 45": 45, "Thanda 50": 50, "Thanda 60": 60, "Thanda 90": 90, "Thanda 90 Coco cola": 90, "Thanda Bottle 30": 30, "Thanda Bottle 35": 35, 
+            "Tomato Soup": 80, "Tost Omlete": 90, "Tost and Butter": 60, "Veg. Biryani": 170, "Veg. Chowmein (F)": 190, "Veg. Chowmein (H)": 110, "Veg. Cutlete": 160, "Veg. Fried Rice": 170, "Veg. Goli Kabab": 220, "Veg. Hot & Source Soup": 100, "Veg. Jhal Phrazy": 160, "Veg. Kofta Curry": 160, "Veg. Manchow Soup": 120, "Veg. Manchurian (F)": 170, "Veg. Manchurian (H)": 110, "Veg. Moglai Paratha": 120, "Veg. Navratan Kurma": 190, "Veg. Pulao": 150, "Veg. Raita": 130, "Veg. Raita ( H )": 70, "Veg. Roll": 120, "Veg. Sandwich": 100, "Veg. Shahi Pulao": 190, "Veg. Stuff Naan": 120, "Veg. Stuff Paratha": 100, "Vegetable Chat-Patta": 160, "Vegetable Pakora": 160, "Water Bottle 20": 20
         };
+        const itemNames = Object.keys(menuData);
+        let billItems = []; 
 
-        let menuData = JSON.parse(localStorage.getItem('sone_dynamic_menu')) || defaultMenuData;
-
-        function loadCustomerMenu() {
-            const container = document.getElementById('cust-menu-list');
-            container.innerHTML = '';
-            
-            // Show only top 15 items for customer view to keep it clean
-            let itemsToShow = Object.keys(menuData).slice(0, 15);
-            
-            itemsToShow.forEach(name => {
-                let price = menuData[name];
-                let qty = cCart[name] || 0;
-                let btnHTML = qty === 0 
-                    ? `<button class="c-add-btn" onclick="updateCCart('${name}', ${price}, 1)">ADD +</button>`
-                    : `<div class="qty-box"><button onclick="updateCCart('${name}', ${price}, -1)">-</button><span>${qty}</span><button onclick="updateCCart('${name}', ${price}, 1)">+</button></div>`;
-                
-                container.innerHTML += `
-                    <div class="cust-menu-item">
-                        <div class="c-info">
-                            <h4>${name}</h4>
-                            <p>₹${price}</p>
-                        </div>
-                        <div>${btnHTML}</div>
-                    </div>
-                `;
-            });
-            updateCCartUI();
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('show'); 
+            document.getElementById('overlay').classList.toggle('show'); 
         }
-
-        function updateCCart(name, price, change) {
-            if (!cCart[name]) cCart[name] = 0;
-            cCart[name] += change;
-            if (cCart[name] <= 0) delete cCart[name];
-            loadCustomerMenu();
-        }
-
-        function updateCCartUI() {
-            let tAmt = 0; let tQty = 0;
-            let summaryHTML = '';
-            
-            for (const [name, qty] of Object.entries(cCart)) {
-                let p = menuData[name] * qty;
-                tAmt += p; tQty += qty;
-                summaryHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${qty}x ${name}</span><b>₹${p}</b></div>`;
-            }
-
-            if (tQty > 0) {
-                document.getElementById('c-item-count').innerText = tQty + " Items";
-                document.getElementById('c-total').innerText = tAmt;
-                document.getElementById('c-modal-total').innerText = tAmt;
-                document.getElementById('c-qr-amt').innerText = tAmt;
-                
-                summaryHTML += `<hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;"><div style="display:flex; justify-content:space-between; color:#D32F2F; font-size:16px;"><b>Total Bill</b><b>₹${tAmt}</b></div>`;
-                document.getElementById('c-bill-summary').innerHTML = summaryHTML;
-                
-                document.getElementById('c-cart').style.display = 'flex';
-            } else {
-                document.getElementById('c-cart').style.display = 'none';
-            }
-        }
-
-        function openCustModal() { document.getElementById('c-modal').style.display = 'flex'; }
-        function closeCustModal() { document.getElementById('c-modal').style.display = 'none'; }
-
-        function sendToWhatsApp() {
-            const name = document.getElementById('c-name').value.trim();
-            const utr = document.getElementById('c-utr').value.trim();
-
-            if(!name || !utr) return alert("Kripya Apna Naam aur Payment UTR Number jaroor dalein.");
-
-            let tAmt = 0;
-            let text = `*NEW ORDER* 🛎️\n\n*Name:* ${name}\n*UTR No:* ${utr}\n\n*Items:*\n`;
-            for (const [n, q] of Object.entries(cCart)) {
-                text += `▪️ ${q} x ${n}\n`;
-                tAmt += (menuData[n] * q);
-            }
-            text += `\n*Total Paid:* ₹${tAmt}\n\n_Payment Receipt check karke Order confirm karein._`;
-
-            let url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
-            
-            alert("Order WhatsApp par bhej diya gaya hai! Admin isse check karke accept karenge.");
-            cCart = {}; closeCustModal(); loadCustomerMenu();
-        }
-
-        // ==========================================
-        // 4. ADMIN APP LOGIC (SAME AS BEFORE)
-        // ==========================================
-        const loginScreen = document.getElementById('login-screen');
-        const appContainer = document.getElementById('app-container');
-        const loginError = document.getElementById('login-error');
-        const syncBadge = document.getElementById('sync-badge');
-        let realtimeChannel = null;
-
-        async function loginUser() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            loginError.innerText = "Checking Details...";
-            
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) { loginError.innerText = "Error: " + error.message; } 
-            else {
-                loginScreen.style.display = 'none';
-                appContainer.style.display = 'flex';
-                fetchOnlineData();
-                setupRealtimeListener(); 
-            }
-        }
-
-        async function logoutUser() {
-            await supabaseClient.auth.signOut();
-            if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
-            appContainer.style.display = 'none';
-            document.getElementById('choice-screen').style.display = 'flex';
-            document.getElementById('login-email').value = '';
-            document.getElementById('login-password').value = '';
-        }
-
-        function updateSyncStatus(isOnline, text = null) {
-            if (isOnline) { syncBadge.innerHTML = `<i class="fas fa-cloud-check"></i> ${text || 'Synced'}`; syncBadge.style.color = 'var(--ios-green)'; } 
-            else { syncBadge.innerHTML = `<i class="fas fa-cloud-download-alt"></i> Offline`; syncBadge.style.color = 'var(--ios-orange)'; }
-        }
-
-        window.addEventListener('online', () => { syncWithCloud(); });
-        window.addEventListener('offline', () => { updateSyncStatus(false); });
-
-        function setupRealtimeListener() {
-            if (realtimeChannel) return;
-            realtimeChannel = supabaseClient.channel('schema-db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'billing_data' }, (payload) => {
-                    updateSyncStatus(true, "Auto Updating...");
-                    setTimeout(() => fetchOnlineData(true), 1000); 
-                }).subscribe();
-        }
-
-        async function fetchOnlineData(isAutoSync = false) {
-            if(!navigator.onLine) { updateSyncStatus(false); return; }
-            if(!isAutoSync) updateSyncStatus(true, "Downloading...");
-            
-            const { data, error } = await supabaseClient.from('billing_data').select('*').eq('id', 'sone_billing_state').single();
-            
-            if (data && data.app_data) {
-                let localData = { bills: JSON.parse(localStorage.getItem('sone_bills_isolated')) || [], menu: JSON.parse(localStorage.getItem('sone_dynamic_menu')) || defaultMenuData, trash: JSON.parse(localStorage.getItem('sone_bills_trash')) || [], permanentMenu: JSON.parse(localStorage.getItem('sone_permanent_menu')) || null };
-                let cloudData = data.app_data;
-                
-                if(cloudData.menu) { localStorage.setItem('sone_dynamic_menu', JSON.stringify(cloudData.menu)); menuData = cloudData.menu; itemNames = Object.keys(menuData); renderMenuUpdateTable(); }
-                
-                let combinedBills = [...localData.bills];
-                (cloudData.bills || []).forEach(cb => { if(!combinedBills.find(lb => lb.id === cb.id)) combinedBills.push(cb); });
-                localStorage.setItem('sone_bills_isolated', JSON.stringify(combinedBills));
-                if(cloudData.trash) localStorage.setItem('sone_bills_trash', JSON.stringify(cloudData.trash));
-                
-                loadHistory();
-                let s = JSON.parse(localStorage.getItem('sone_bills_isolated')) || [];
-                if(s.filter(b=>b.date===displayDate).length > 0) { billCounter = Math.max(...s.filter(b=>b.date===displayDate).map(b=>b.billNo)) + 1; document.getElementById('manualBillNo').value = billCounter; }
-                updateSyncStatus(true);
-            } else { updateSyncStatus(true); }
-        }
-
-        async function syncWithCloud() {
-            if(!navigator.onLine) { updateSyncStatus(false); return; }
-            updateSyncStatus(true, "Saving to Cloud...");
-            let localData = { bills: JSON.parse(localStorage.getItem('sone_bills_isolated')) || [], menu: JSON.parse(localStorage.getItem('sone_dynamic_menu')) || defaultMenuData, trash: JSON.parse(localStorage.getItem('sone_bills_trash')) || [], permanentMenu: JSON.parse(localStorage.getItem('sone_permanent_menu')) || null };
-            const { error } = await supabaseClient.from('billing_data').upsert({ id: 'sone_billing_state', app_data: localData });
-            if(!error) { updateSyncStatus(true, "Synced"); } else { updateSyncStatus(false, "Sync Error"); }
-        }
-
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); document.getElementById('overlay').classList.toggle('show'); }
+        
         function openTab(tabId, el) { 
             document.querySelectorAll('.tab-panel').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
@@ -606,39 +291,28 @@
             if(el) el.classList.add('active'); 
             document.getElementById('sidebar').classList.remove('show');
             document.getElementById('overlay').classList.remove('show');
-            if(tabId === 'menuUpdateTab') renderMenuUpdateTable();
-            if(tabId === 'recycleBinTab') loadTrash();
-        }
-
-        let today = new Date();
-        let displayDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-        document.getElementById('displayDate').innerText = displayDate;
-        let itemNames = Object.keys(menuData);
-        let billItems = []; let billCounter = 1; let currentPreviewBill = null;
-
-        window.onload = async function() {
-            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
-            let s = JSON.parse(localStorage.getItem('sone_bills_isolated')) || [];
-            if(s.filter(b=>b.date===displayDate).length > 0) { billCounter = Math.max(...s.filter(b=>b.date===displayDate).map(b=>b.billNo)) + 1; }
-            document.getElementById('manualBillNo').value = billCounter;
-            loadHistory();
-            const { data } = await supabaseClient.auth.getSession();
-            if (data.session) {
-                document.getElementById('choice-screen').style.display = 'none';
-                appContainer.style.display = 'flex';
-                fetchOnlineData(); setupRealtimeListener();
+            
+            // Show/Hide FAB button based on tab
+            if(tabId === 'billingTab' || tabId === 'historyTab') {
+                document.getElementById('quickOrderBtn').style.display = 'none';
+            } else {
+                document.getElementById('quickOrderBtn').style.display = 'flex';
             }
+
+            if(tabId === 'historyTab') loadCustomerHistory();
         }
 
+        // AUTOCOMPLETE SEARCH
         const input = document.getElementById("itemInput");
         const list = document.getElementById("autocompleteList");
+        
         input.addEventListener("input", function() {
             list.innerHTML = ""; document.getElementById("priceInput").value = "";
             if (!this.value) return;
             itemNames.forEach(i => {
                 if (i.toLowerCase().includes(this.value.toLowerCase())) {
                     let b = document.createElement("DIV");
-                    b.innerHTML = `<span>${i}</span><span style="color:var(--ios-orange); font-weight:bold;">₹ ${menuData[i]}</span><input type='hidden' value='${i}'>`;
+                    b.innerHTML = `<span>${i}</span><span style="color:#b31217; font-weight:bold;">₹ ${menuData[i]}</span><input type='hidden' value='${i.replace(/'/g, "&#39;")}'>`;
                     b.addEventListener("click", function() {
                         input.value = this.getElementsByTagName("input")[0].value;
                         document.getElementById("priceInput").value = menuData[input.value];
@@ -649,143 +323,133 @@
             });
         });
         document.addEventListener("click", e => { if(e.target !== input) list.innerHTML = ""; });
-        input.addEventListener("keydown", function(e) {
-            if (e.key === "Enter") {
-                e.preventDefault(); let match = itemNames.find(n => n.toLowerCase() === this.value.toLowerCase());
-                if(match) { this.value = match; document.getElementById("priceInput").value = menuData[match]; list.innerHTML = ""; document.getElementById("qtyInput").focus(); }
-            }
-        });
-        document.getElementById("qtyInput").addEventListener("keydown", e => { if(e.key==="Enter") { e.preventDefault(); addItemToBill(); }});
 
+        // ADD TO CART
         function addItemToBill() {
             let n = document.getElementById("itemInput").value;
             let p = parseFloat(document.getElementById("priceInput").value);
             let qInput = document.getElementById("qtyInput").value.trim().toUpperCase();
-            if(!n || isNaN(p) || qInput === "") return alert("Valid item select karein!");
-            let isHalf = false; let isFullHalf = false; let q = 1;
-            if (qInput === 'H') { isHalf = true; q = 1; } else if (qInput === 'FH') { isFullHalf = true; q = 1; } else { q = parseInt(qInput); if (isNaN(q) || q <= 0) return alert("Sahi quantity dalein!"); }
-            let finalPrice = p; let finalName = n;
-            if (isHalf) { if (!n.includes("(H)")) { finalPrice = Math.round(p / 2); finalName = n + " (Half)"; } } else if (isFullHalf) { let halfPrice = Math.round(p / 2); finalPrice = p + halfPrice; finalName = n + " (F+H)"; }
+
+            if(!n || isNaN(p) || qInput === "") return alert("Please select a dish from the search list!");
+
+            let isHalf = false, isFullHalf = false, q = 1;
+            if (qInput === 'H') { isHalf = true; } 
+            else if (qInput === 'FH') { isFullHalf = true; } 
+            else { q = parseInt(qInput); if (isNaN(q) || q <= 0) return alert("Enter valid quantity!"); }
+
+            let finalPrice = p, finalName = n;
+            if (isHalf && !n.includes("(H)") && !n.includes("( H )")) { 
+                finalPrice = Math.round(p / 2); finalName = n + " (Half)"; 
+            } 
+            else if (isFullHalf) { 
+                finalPrice = p + Math.round(p / 2); finalName = n + " (F+H)"; 
+            }
+
             let totalAmount = finalPrice * q;
             let idx = billItems.findIndex(i => i.name === finalName && i.price === finalPrice);
-            if(idx > -1) { billItems[idx].qty += q; billItems[idx].total = billItems[idx].qty * billItems[idx].price; } else { billItems.push({name: finalName, price: finalPrice, qty: q, total: totalAmount}); }
-            updateBillDisplay(); document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").value="1"; document.getElementById("itemInput").focus();
-        }
-
-        function editBillItem(idx) {
-            let item = billItems[idx]; let originalName = item.name; let originalPrice = item.price; let qtyVal = item.qty;
-            if(originalName.endsWith(" (Half)")) { originalName = originalName.replace(" (Half)", ""); originalPrice = item.price * 2; qtyVal = "H"; } else if (originalName.endsWith(" (F+H)")) { originalName = originalName.replace(" (F+H)", ""); originalPrice = Math.round(item.price / 1.5); qtyVal = "FH"; }
-            document.getElementById("itemInput").value = originalName; document.getElementById("priceInput").value = originalPrice; document.getElementById("qtyInput").value = qtyVal;
-            billItems.splice(idx, 1); updateBillDisplay(); document.getElementById("qtyInput").focus();
+            
+            if(idx > -1) { 
+                billItems[idx].qty += q; 
+                billItems[idx].total = billItems[idx].qty * billItems[idx].price; 
+            } else { 
+                billItems.push({name: finalName, price: finalPrice, qty: q, total: totalAmount}); 
+            }
+            
+            updateBillDisplay(); 
+            document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").value="1";
         }
 
         function updateBillDisplay() {
             let tb = document.getElementById("billBody"); tb.innerHTML = ""; let gt = 0;
-            billItems.forEach((i, idx) => {
-                gt += i.total;
-                tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td>${i.price}</td><td style="font-weight:bold;">${i.total}</td>
-                <td style="display:flex; gap:8px;">
-                    <button onclick="editBillItem(${idx})" style="background:var(--ios-blue);color:white;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;" title="Edit"><i class="fas fa-pen"></i></button>
-                    <button onclick="billItems.splice(${idx},1);updateBillDisplay();" style="background:var(--ios-red);color:white;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;" title="Delete"><i class="fas fa-trash"></i></button>
-                </td></tr>`;
-            });
+            if(billItems.length === 0) { tb.innerHTML = "<tr><td colspan='4' style='text-align:center; color:#888; padding:20px;'>Cart is empty</td></tr>"; }
+            else {
+                billItems.forEach((i, idx) => {
+                    gt += i.total;
+                    tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td style="font-weight:bold;">₹${i.total}</td>
+                    <td style="text-align:center;"><button onclick="billItems.splice(${idx},1);updateBillDisplay();" style="background:#ffebee;color:#b31217;border:1px solid #ffcdd2;padding:6px 12px;border-radius:8px;cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>`;
+                });
+            }
             document.getElementById("grandTotal").innerText = gt;
         }
 
-        function clearBill() { if(confirm("Clear order?")) { billItems = []; updateBillDisplay(); } }
-
+        // CHECKOUT & WHATSAPP
         function openCheckoutModal() {
-            if(billItems.length === 0) return alert("Bill khali hai!");
+            if(billItems.length === 0) return alert("Bhaia cart khali hai, pehle kuch add karein!");
             let gt = billItems.reduce((s,i) => s + i.total, 0);
             document.getElementById('modalGrandTotal').innerText = gt;
-            document.getElementById('chkCash').value = gt; document.getElementById('chkOnline').value = 0; document.getElementById('chkDiscount').value = 0; document.getElementById('chkName').value = '';
-            calcUdhaar(); document.getElementById('checkoutModal').style.display = 'block';
+            
+            let savedName = localStorage.getItem('sone_cust_name');
+            let savedPhone = localStorage.getItem('sone_cust_phone');
+            if(savedName) document.getElementById('custName').value = savedName;
+            if(savedPhone) document.getElementById('custPhone').value = savedPhone;
+
+            document.getElementById('checkoutModal').style.display = 'block';
+        }
+        
+        function closeModal() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+        async function placeOrderAndWhatsApp() {
+            let name = document.getElementById('custName').value.trim();
+            let phone = document.getElementById('custPhone').value.trim();
+            let gt = parseFloat(document.getElementById('modalGrandTotal').innerText);
+            
+            if(!name || !phone || phone.length < 10) {
+                return alert("Sahi Naam aur Phone Number dalein!");
+            }
+
+            localStorage.setItem('sone_cust_name', name);
+            localStorage.setItem('sone_cust_phone', phone);
+
+            let orderId = "ORD-" + Math.floor(1000 + Math.random() * 9000);
+            let orderDate = new Date().toLocaleString('en-US', {hour12:true});
+            let orderObj = { orderId: orderId, date: orderDate, items: JSON.parse(JSON.stringify(billItems)), total: gt, status: 'Payment Checking...' };
+
+            // 1. Private History (LocalStorage)
+            let history = JSON.parse(localStorage.getItem('my_sone_orders')) || [];
+            history.unshift(orderObj);
+            localStorage.setItem('my_sone_orders', JSON.stringify(history));
+
+            // 2. Supabase DB Save
+            try {
+                await supabaseClient.from('customer_orders').insert([{
+                    customer_name: name, phone: phone, total_amount: gt, items_json: orderObj.items, order_status: 'Paid QR - Verification Pending'
+                }]);
+            } catch(e) { console.log(e); }
+
+            // 3. WhatsApp Message
+            let waText = `*NEW ONLINE ORDER* 🚨%0A%0A*Order ID:* ${orderId}%0A*Name:* ${name}%0A*Phone:* ${phone}%0A%0A*ITEMS:*%0A`;
+            billItems.forEach(i => { waText += `▪️ ${i.name} (Qty: ${i.qty}) - ₹${i.total}%0A`; });
+            waText += `%0A*TOTAL PAYABLE:* ₹${gt}%0A*Payment Mode:* Online QR Scanned%0A%0A_Please verify my payment and accept order!_`;
+
+            window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank');
+
+            billItems = []; updateBillDisplay(); closeModal();
+            openTab('historyTab', document.querySelectorAll('.nav-links a')[2]);
         }
 
-        function calcUdhaar() {
-            let gt = parseFloat(document.getElementById('modalGrandTotal').innerText) || 0;
-            let cash = parseFloat(document.getElementById('chkCash').value) || 0;
-            let online = parseFloat(document.getElementById('chkOnline').value) || 0;
-            let disc = parseFloat(document.getElementById('chkDiscount').value) || 0;
-            let bal = gt - disc - cash - online;
-            let a = document.getElementById('udhaarAlert');
-            if(bal > 0) { document.getElementById('chkUdhaar').innerText = bal; a.style.display = 'block'; } else { a.style.display = 'none'; }
-        }
+        // HISTORY VIEW
+        function loadCustomerHistory() {
+            let history = JSON.parse(localStorage.getItem('my_sone_orders')) || [];
+            let container = document.getElementById("customerHistoryContainer");
+            container.innerHTML = "";
 
-        function confirmCheckout() {
-            let gt = parseFloat(document.getElementById('modalGrandTotal').innerText)||0, cash = parseFloat(document.getElementById('chkCash').value)||0, online = parseFloat(document.getElementById('chkOnline').value)||0, disc = parseFloat(document.getElementById('chkDiscount').value)||0;
-            let name = document.getElementById('chkName').value.trim();
-            let bal = gt - disc - cash - online;
-            if(bal > 0 && name === '') return alert("उधार के लिए नाम ज़रूरी है!");
-            let finalUserBillNo = parseInt(document.getElementById('manualBillNo').value);
-            if(isNaN(finalUserBillNo) || finalUserBillNo <= 0) { finalUserBillNo = billCounter; }
-            let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || [];
-            let nB = { id: Date.now(), billNo: finalUserBillNo, date: displayDate, time: new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}), items: JSON.parse(JSON.stringify(billItems)), total: gt, paid: cash+online, disc: disc, udhaar: bal>0?bal:0, custName: name };
-            sb.push(nB); localStorage.setItem('sone_bills_isolated', JSON.stringify(sb));
-            generatePrintHtml(nB); document.getElementById('checkoutModal').style.display = 'none';
-            setTimeout(() => { window.print(); billCounter = Math.max(billCounter, finalUserBillNo) + 1; document.getElementById('manualBillNo').value = billCounter; billItems=[]; updateBillDisplay(); loadHistory(); syncWithCloud(); }, 300);
-        }
+            if(history.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 20px; color:#888;">No past orders found.</div>`; return;
+            }
 
-        function getBillHTML(billData) {
-            let html = `<div class="bill-container"><div class="bill-header"><span>CASH MEMO</span><span><i class="fas fa-phone-alt"></i> Mob.: 9155745145</span></div><div class="bill-title"><h2><i class="fas fa-utensils"></i> SONE RESTAURANT</h2><div>DUMRAON STATION ROAD, DUMRAON</div></div><div class="bill-info"><span>Bill No: <b>${billData.billNo}</b></span><span>Date: <b>${billData.date}</b></span></div>${billData.custName ? `<div style="text-align:left; font-size:14px; font-weight:700; margin-bottom:12px; color:#D32F2F;">Customer Name: ${billData.custName}</div>` : ''}<table class="print-table"><tr><th>PARTICULARS</th><th>QTY</th><th>AMOUNT (₹)</th></tr>`;
-            billData.items.forEach(i => { html += `<tr><td>${i.name}</td><td>${i.qty}</td><td>${i.total}</td></tr>`; });
-            html += `</table><div class="bill-totals"><div><span>Subtotal:</span><span>₹ ${billData.total}</span></div>`;
-            if(billData.disc > 0) html += `<div style="color:#D32F2F;"><span>Discount:</span><span>- ₹ ${billData.disc}</span></div>`;
-            if(billData.paid > 0) html += `<div style="color:#FF9500;"><span>Paid Amount:</span><span>₹ ${billData.paid}</span></div>`;
-            if(billData.udhaar > 0) html += `<div style="color:#D32F2F;"><span>Due Balance (उधार):</span><span>₹ ${billData.udhaar}</span></div>`;
-            html += `<div class="grand-total"><span>GRAND TOTAL</span><span>₹ ${billData.total - billData.disc}</span></div></div><div class="bill-signature"><span>Authorized Sign</span></div><div style="text-align:center; margin-top:20px; font-weight:800; font-size:13px; color:#D32F2F;">Thank You! Visit Again. <i class="fas fa-smile"></i></div></div>`;
-            return html;
-        }
-
-        function openPreviewModal(id) { let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || []; let bill = sb.find(b => b.id === id); if(bill) { currentPreviewBill = bill; document.getElementById('previewReceiptBox').innerHTML = getBillHTML(bill); document.getElementById('previewModal').style.display = 'block'; } }
-        function closePreviewModal() { document.getElementById('previewModal').style.display = 'none'; currentPreviewBill = null; }
-        function printFromPreview() { if(currentPreviewBill) { generatePrintHtml(currentPreviewBill); closePreviewModal(); setTimeout(() => window.print(), 300); } }
-        function generatePrintHtml(billData) { document.getElementById('print-area').innerHTML = getBillHTML(billData); }
-        function downloadBillImage() { let billElement = document.querySelector("#previewReceiptBox .bill-container"); html2canvas(billElement, { scale: 2 }).then(canvas => { let link = document.createElement('a'); link.download = `Sone_Bill_${currentPreviewBill.billNo}.png`; link.href = canvas.toDataURL("image/png"); link.click(); }); }
-
-        function editExistingBill() { if(!currentPreviewBill) return; if(confirm("Kya aap is bill ko Edit karna chahte hain? (Naya save karne par purana wala list se hat jayega)")) { billItems = JSON.parse(JSON.stringify(currentPreviewBill.items)); document.getElementById('manualBillNo').value = currentPreviewBill.billNo; let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || []; sb = sb.filter(b => b.id !== currentPreviewBill.id); localStorage.setItem('sone_bills_isolated', JSON.stringify(sb)); updateBillDisplay(); closePreviewModal(); openTab('billingTab', document.querySelector('.nav-links a:first-child')); syncWithCloud(); loadHistory(); alert("Bill wapas aa gaya hai! Ab isme item jodiye ya ghataiye aur wapas Save kariye."); } }
-
-        function loadHistory() {
-            let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || [];
-            let tb = document.getElementById("historyBody"); tb.innerHTML = "";
-            let targetDate = displayDate; let filterValue = document.getElementById("filterDate").value;
-            if (filterValue) { let dateParts = filterValue.split('-'); targetDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`; }
-            let filteredBills = sb.filter(b => b.date === targetDate);
-            if (filteredBills.length === 0) { tb.innerHTML = "<tr><td colspan='3' style='text-align:center; padding: 20px; color: #888;'>Is date par koi bill nahi hai.</td></tr>"; return; }
-            filteredBills.sort((a, b) => a.billNo - b.billNo).forEach(b => {
-                tb.innerHTML += `<tr><td><b>#${b.billNo}</b></td><td style="font-weight:600; color:var(--ios-green);">₹ ${b.total}</td>
-                <td style="display:flex; gap:10px;">
-                    <button onclick="openPreviewModal(${b.id})" style="background:var(--ios-blue);color:white;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;" title="View"><i class="fas fa-eye"></i></button>
-                    <button onclick="moveToTrash(${b.id})" style="background:var(--ios-red);color:white;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;" title="Delete"><i class="fas fa-trash"></i></button>
-                </td></tr>`;
+            history.forEach(order => {
+                let html = `<div class="history-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <span style="font-weight:bold; color:#333;">${order.orderId}</span>
+                        <span style="color:var(--green); font-weight:800;">₹${order.total}</span>
+                    </div>
+                    <div style="font-size:12px; color:#888; margin-bottom:8px;">${order.date}</div>
+                    <div style="font-size:13px; color:#555; line-height:1.6;">`;
+                order.items.forEach(i => { html += `<div>• ${i.name} (x${i.qty})</div>`; });
+                html += `</div><div style="margin-top:10px; font-size:12px; font-weight:600; color:var(--orange);">Status: ${order.status}</div></div>`;
+                container.innerHTML += html;
             });
         }
-
-        function moveToTrash(id) { if(confirm("Ye bill Recycle Bin me chala jayega. Jari rakhein?")) { let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || []; let trash = JSON.parse(localStorage.getItem('sone_bills_trash')) || []; let billToMove = sb.find(b => b.id === id); if(billToMove) { trash.push(billToMove); localStorage.setItem('sone_bills_trash', JSON.stringify(trash)); localStorage.setItem('sone_bills_isolated', JSON.stringify(sb.filter(b=>b.id!==id))); loadHistory(); syncWithCloud(); } } }
-        function loadTrash() { let trash = JSON.parse(localStorage.getItem('sone_bills_trash')) || []; let tb = document.getElementById("trashBody"); tb.innerHTML = ""; if(trash.length === 0) { tb.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Recycle Bin khali hai.</td></tr>"; return; } trash.reverse().forEach(b => { tb.innerHTML += `<tr><td><b>#${b.billNo}</b></td><td>₹ ${b.total}</td><td style="display:flex; gap:10px; justify-content:center;"><button onclick="restoreBill(${b.id})" style="background:var(--ios-green);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;" title="Restore"><i class="fas fa-undo"></i></button><button onclick="deleteForever(${b.id})" style="background:#555;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;" title="Delete Forever"><i class="fas fa-times"></i></button></td></tr>`; }); }
-        function restoreBill(id) { let trash = JSON.parse(localStorage.getItem('sone_bills_trash')) || []; let sb = JSON.parse(localStorage.getItem('sone_bills_isolated')) || []; let billToMove = trash.find(b => b.id === id); if(billToMove) { sb.push(billToMove); localStorage.setItem('sone_bills_isolated', JSON.stringify(sb)); localStorage.setItem('sone_bills_trash', JSON.stringify(trash.filter(b=>b.id!==id))); loadTrash(); loadHistory(); syncWithCloud(); alert("Bill wapas History me Restore ho gaya!"); } }
-        function deleteForever(id) { if(confirm("Kya aap ise hamesha ke liye mitana chahte hain? (Data wapas nahi aayega)")) { let trash = JSON.parse(localStorage.getItem('sone_bills_trash')) || []; localStorage.setItem('sone_bills_trash', JSON.stringify(trash.filter(b=>b.id!==id))); loadTrash(); syncWithCloud(); } }
-
-        function renderMenuUpdateTable() { let tb = document.getElementById("menuUpdateBody"); tb.innerHTML = ""; let keys = Object.keys(menuData).sort(); keys.forEach(k => { tb.innerHTML += `<tr><td>${k}</td><td style="font-weight:600; color:var(--ios-green);">₹ ${menuData[k]}</td><td style="display:flex; gap:10px; justify-content:center;"><button onclick="editMenuItem('${k}', ${menuData[k]})" style="background:var(--ios-blue);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;" title="Edit"><i class="fas fa-pen"></i></button><button onclick="deleteMenuItem('${k}')" style="background:var(--ios-red);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function editMenuItem(name, price) { document.getElementById("newMenuName").value = name; document.getElementById("newMenuPrice").value = price; alert(`"${name}" ki details upar aa gayi hain. Edit karke Save dabayein.`); document.getElementById("newMenuPrice").focus(); }
-        function saveMenuItem() { let name = document.getElementById("newMenuName").value.trim(); let price = parseFloat(document.getElementById("newMenuPrice").value); if(!name || isNaN(price) || price < 0) return alert("Sahi Item ka naam aur daam dalein!"); menuData[name] = price; localStorage.setItem('sone_dynamic_menu', JSON.stringify(menuData)); itemNames = Object.keys(menuData); document.getElementById("newMenuName").value = ""; document.getElementById("newMenuPrice").value = ""; renderMenuUpdateTable(); syncWithCloud(); alert(`"${name}" menu me save ho gaya!`); }
-        function deleteMenuItem(name) { if(confirm(`Kya aap sach me "${name}" ko menu se hatana chahte hain?`)) { delete menuData[name]; localStorage.setItem('sone_dynamic_menu', JSON.stringify(menuData)); itemNames = Object.keys(menuData); renderMenuUpdateTable(); syncWithCloud(); } }
-        function makeMenuPermanent() { if(confirm("Kya aap is current menu ko 'Original Menu' banana chahte hain? Iske baad Restore karne par yehi items wapas aayenge.")) { localStorage.setItem('sone_permanent_menu', JSON.stringify(menuData)); syncWithCloud(); alert("Current menu ab aapka Naya Original Menu ban gaya hai! 🔒"); } }
-        function restoreDefaultMenu() { if(confirm("Dhyan dein: Ye aapke menu ko Original menu jaisa kar dega. Jo naye item aapne 'Save as Original' nahi kiye hain wo delete ho jayenge. Jari rakhein?")) { let permanentMenu = JSON.parse(localStorage.getItem('sone_permanent_menu')); if (permanentMenu) { menuData = JSON.parse(JSON.stringify(permanentMenu)); } else { menuData = JSON.parse(JSON.stringify(defaultMenuData)); } localStorage.setItem('sone_dynamic_menu', JSON.stringify(menuData)); itemNames = Object.keys(menuData); renderMenuUpdateTable(); syncWithCloud(); alert("Original menu wapas aa gaya hai!"); } }
-        function filterMenuTable() { let input = document.getElementById("searchMenu").value.toUpperCase(); let trs = document.getElementById("menuUpdateBody").getElementsByTagName("tr"); for (let i = 0; i < trs.length; i++) { let td = trs[i].getElementsByTagName("td")[0]; if (td) { let txtValue = td.textContent || td.innerText; if (txtValue.toUpperCase().indexOf(input) > -1) { trs[i].style.display = ""; } else { trs[i].style.display = "none"; } } } }
-        
-        function downloadMenuPhoto() {
-            alert("Menu ki photo ban rahi hai, kripya thoda intezaar karein...");
-            let printDiv = document.createElement("div"); printDiv.style.width = "400px"; printDiv.style.padding = "20px"; printDiv.style.background = "#fff"; printDiv.style.color = "#000"; printDiv.style.fontFamily = "'Poppins', sans-serif"; printDiv.style.position = "absolute"; printDiv.style.left = "-9999px"; 
-            let html = `<h2 style="text-align:center; color:#D32F2F; margin-bottom:5px;">SONE RESTAURANT</h2><h4 style="text-align:center; margin-top:0; border-bottom:2px solid #ddd; padding-bottom:10px;">Official Menu</h4><table style="width:100%; border-collapse: collapse; font-size:14px;"><tr><th style="text-align:left; border-bottom:2px solid #000; padding:8px 5px;">Item Name</th><th style="text-align:right; border-bottom:2px solid #000; padding:8px 5px;">Price (₹)</th></tr>`;
-            let keys = Object.keys(menuData).sort(); keys.forEach(k => { html += `<tr><td style="padding:6px 5px; border-bottom:1px dashed #ccc;">${k}</td><td style="text-align:right; padding:6px 5px; border-bottom:1px dashed #ccc; font-weight:bold;">₹ ${menuData[k]}</td></tr>`; });
-            let displayDate = document.getElementById('displayDate').innerText; html += `</table><div style="text-align:center; margin-top:20px; font-size:12px; color:#666; font-weight:bold;">Generated on: ${displayDate}</div>`;
-            printDiv.innerHTML = html; document.body.appendChild(printDiv);
-            html2canvas(printDiv, { scale: 2 }).then(canvas => { let link = document.createElement('a'); link.download = `Sone_Restaurant_Menu_${displayDate.replace(/\//g, '-')}.png`; link.href = canvas.toDataURL("image/png"); link.click(); document.body.removeChild(printDiv); });
-        }
-
-        function exportBackup() { let data = { bills: JSON.parse(localStorage.getItem('sone_bills_isolated')) || [], menu: JSON.parse(localStorage.getItem('sone_dynamic_menu')) || defaultMenuData, trash: JSON.parse(localStorage.getItem('sone_bills_trash')) || [], permanentMenu: JSON.parse(localStorage.getItem('sone_permanent_menu')) || null }; let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); let link = document.createElement('a'); link.href = dataStr; link.download = `Sone_Backup_${displayDate.replace(/\//g, '-')}.json`; link.click(); }
-        function importBackup() { let fileInput = document.getElementById('importFile'); if(!fileInput.files.length) return alert("Pehle Backup (.json) file select karein!"); let file = fileInput.files[0]; let reader = new FileReader(); reader.onload = function(e) { try { let data = JSON.parse(e.target.result); if(data.bills) localStorage.setItem('sone_bills_isolated', JSON.stringify(data.bills)); if(data.menu) localStorage.setItem('sone_dynamic_menu', JSON.stringify(data.menu)); if(data.trash) localStorage.setItem('sone_bills_trash', JSON.stringify(data.trash)); if(data.permanentMenu) localStorage.setItem('sone_permanent_menu', JSON.stringify(data.permanentMenu)); syncWithCloud(); alert("✅ Data safaltapurvak restore ho gaya hai! App reload ho raha hai..."); location.reload(); } catch(err) { alert("❌ Ghalat file format! Kripya sahi Backup file chunein."); } }; reader.readAsText(file); }
     </script>
 </body>
 </html>
