@@ -9,19 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --bg: #F8F9FA; --card: #FFFFFF; --text: #1C1C1E; --orange-grad: linear-gradient(135deg, #e52d27 0%, #b31217 100%); --green: #34C759; --shadow: 0 8px 20px rgba(0,0,0,0.06); }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent;}
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; overflow-x:hidden;}
         
         /* HEADER LOGO FIXED */
         .top-header { background: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.06);}
         .top-header .center-logo { height: 55px; object-fit: contain; margin: 0 auto;}
         
-        #notification-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #34C759; color: white; padding: 15px 25px; border-radius: 50px; box-shadow: 0 10px 30px rgba(52, 199, 89, 0.4); z-index: 9999; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; transition: top 0.5s ease;}
+        /* NOTIFICATION TOAST */
+        #notification-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #34C759; color: white; padding: 15px 25px; border-radius: 50px; box-shadow: 0 10px 30px rgba(52, 199, 89, 0.4); z-index: 9999; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); width:max-content;}
         #notification-toast.show { top: 20px; }
+        #notification-toast.error { background: #FF3B30; box-shadow: 0 10px 30px rgba(255, 59, 48, 0.4); }
         
-        /* SIDEBAR WITH SONE LOGO */
+        /* SIDEBAR */
         .sidebar { width: 260px; background-color: #FFFFFF; position: fixed; height: 100%; left: -260px; top: 0; z-index: 1001; transition: 0.3s; box-shadow: 2px 0 15px rgba(0,0,0,0.1);}
         .sidebar.show { left: 0; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; backdrop-filter: blur(3px);}
@@ -34,17 +35,26 @@
         .tab-panel.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* DASHBOARD BEAUTIFICATION */
+        /* DASHBOARD BEAUTIFICATION & IMAGE ZOOM */
         .dash-section { margin-bottom: 25px; }
         .dash-section h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; color: #b31217; margin: 0 0 12px 0; border-left: 4px solid #b31217; padding-left: 10px;}
-        .hero-img-container { width: 100%; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 15px; position: relative;}
-        .hero-img-container img { width: 100%; height: 240px; object-fit: cover; display: block;}
         
-        .scroll-gallery { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 15px; scroll-snap-type: x mandatory;}
-        .scroll-gallery::-webkit-scrollbar { display: none; }
-        .scroll-item { scroll-snap-align: start; flex-shrink: 0; width: 220px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); background: #fff;}
-        .scroll-item img { width: 100%; height: 150px; object-fit: cover; display: block;}
-        .scroll-item p { padding: 10px; margin: 0; font-size: 13px; font-weight: 600; text-align: center; color: #444;}
+        .gallery-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .gallery-item { border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); background: #fff; position: relative; cursor: pointer; transition: transform 0.2s;}
+        .gallery-item:active { transform: scale(0.98); }
+        .gallery-item img { width: 100%; height: 200px; object-fit: cover; display: block; transition: 0.3s;}
+        .gallery-item .overlay-text { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 15px 10px; box-sizing: border-box; font-weight: 600; font-size: 14px; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);}
+        .gallery-item .zoom-icon { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.8); color: #333; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+        .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;}
+        .two-col-grid .gallery-item img { height: 140px; }
+
+        /* IMAGE LIGHTBOX (ZOOM) */
+        #lightbox { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); backdrop-filter: blur(8px); flex-direction: column; align-items: center; justify-content: center; opacity:0; transition: opacity 0.3s;}
+        #lightbox.show { display: flex; opacity: 1; }
+        #lightbox img { max-width: 95%; max-height: 80vh; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #lightbox-caption { color: white; font-size: 18px; font-weight: 600; margin-top: 15px; font-family: 'Montserrat'; }
+        #lightbox-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 35px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 3001;}
 
         .fab-order { position: fixed; bottom: 25px; right: 20px; background: var(--orange-grad); color: white; border: none; border-radius: 50px; padding: 15px 25px; font-size: 16px; font-weight: 700; box-shadow: 0 10px 25px rgba(229, 45, 39, 0.4); cursor: pointer; display: flex; align-items: center; gap: 10px; z-index: 900; }
         .card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px;}
@@ -67,7 +77,14 @@
     </style>
 </head>
 <body>
-    <div id="notification-toast"><i class="fas fa-check-circle"></i> <span id="toast-message">Order Updated!</span></div>
+    <div id="notification-toast"><i class="fas fa-check-circle"></i> <span id="toast-message">Action Successful</span></div>
+
+    <!-- LIGHTBOX FOR ZOOM -->
+    <div id="lightbox" onclick="closeLightbox()">
+        <span id="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="Zoomed Image">
+        <div id="lightbox-caption"></div>
+    </div>
 
     <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
     <div class="sidebar" id="sidebar">
@@ -88,31 +105,56 @@
         <div style="width: 24px;"></div>
     </div>
 
-    <button class="fab-order" id="quickOrderBtn" onclick="openTab('billingTab', document.querySelectorAll('.nav-links a')[1])"><i class="fas fa-shopping-cart"></i> Quick Order</button>
+    <button class="fab-order" id="quickOrderBtn" onclick="openTab('billingTab', document.querySelectorAll('.nav-links a')[1])"><i class="fas fa-shopping-cart"></i> Order Now</button>
 
-    <!-- DASHBOARD WITH ALL IMAGES -->
+    <!-- BEAUTIFUL DASHBOARD WITH GALLERY -->
     <div id="dashboardTab" class="tab-panel active">
         <div class="dash-section">
             <h2>Welcome to Sone Restaurant</h2>
-            <div class="hero-img-container"><img src="sonfront.png" alt="Sone Front"></div>
-            <p style="font-size:14px; color:#555; text-align:center;">Dumraon Station Road, Bihar</p>
-        </div>
-        <div class="dash-section">
-            <h2>Our Ambience</h2>
-            <div class="scroll-gallery">
-                <div class="scroll-item"><img src="sonein.png"><p>Premium Dining</p></div>
-                <div class="scroll-item"><img src="sonein1.png"><p>Private Cabin Setup</p></div>
+            <div class="gallery-grid">
+                <div class="gallery-item" onclick="openLightbox('sonefront1.png', 'Sone Restaurant Front View')">
+                    <img src="sonefront1.png" alt="Sone Front">
+                    <div class="overlay-text">Dumraon Station Road, Bihar</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
             </div>
         </div>
+        
+        <div class="dash-section">
+            <h2>Premium Ambience</h2>
+            <div class="two-col-grid">
+                <div class="gallery-item" onclick="openLightbox('sonein.png', 'Premium Dining Setup')">
+                    <img src="sonein.png" alt="Dining">
+                    <div class="overlay-text">Dining</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('sonein1.png', 'Private Cabin Area')">
+                    <img src="sonein1.png" alt="Cabin">
+                    <div class="overlay-text">Cabins</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+            </div>
+        </div>
+
         <div class="dash-section">
             <h2>Party Hall Booking</h2>
-            <div class="scroll-gallery">
-                <div class="scroll-item" style="width: 260px;"><img src="partyhall.png"><p>Spacious Celebration Hall</p></div>
-                <div class="scroll-item" style="width: 260px;"><img src="partyhall1.png"><p>Premium Birthday Decor</p></div>
+            <div class="two-col-grid">
+                <div class="gallery-item" onclick="openLightbox('partyhall.png', 'Spacious Party Hall')">
+                    <img src="partyhall.png" alt="Hall">
+                    <div class="overlay-text">Party Hall</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('partyhall1.png', 'Birthday Decor Setup')">
+                    <img src="partyhall1.png" alt="Decor">
+                    <div class="overlay-text">Decorations</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
             </div>
+            <p style="text-align:center; font-size:12px; color:#888; margin-top:10px;"><i class="fas fa-info-circle"></i> Click on any photo to view full size</p>
         </div>
     </div>
 
+    <!-- ORDER TAB -->
     <div id="billingTab" class="tab-panel">
         <div class="card">
             <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; color:#b31217;"><i class="fas fa-search"></i> Find Your Dish</h3>
@@ -144,6 +186,7 @@
         </div>
     </div>
 
+    <!-- HISTORY TAB -->
     <div id="historyTab" class="tab-panel">
         <div class="card">
             <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color:#b31217;"><i class="fas fa-history"></i> My Order History</h3>
@@ -155,6 +198,7 @@
         </div>
     </div>
 
+    <!-- PAYMENT MODAL -->
     <div id="checkoutModal" class="modal">
         <div class="modal-content">
             <div style="text-align: right;"><i class="fas fa-times" style="font-size:24px; color:#888; cursor:pointer;" onclick="closeModal()"></i></div>
@@ -176,7 +220,35 @@
         const RESTAURANT_WHATSAPP_NUMBER = '919155745145'; 
         const RESTAURANT_LAT = 25.5560; const RESTAURANT_LON = 84.1510;
 
-        // PERMANENT FALLBACK MENU
+        // SOUND & TOAST LOGIC
+        const notifSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+        function playNotificationSound() {
+            notifSound.play().catch(err => console.log("Sound autoplay blocked by browser. User must tap the screen once."));
+        }
+
+        function showToast(msg, isError = false, playSound = true) {
+            let t = document.getElementById('notification-toast');
+            if(isError) { t.classList.add('error'); t.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span id="toast-message">${msg}</span>`; } 
+            else { t.classList.remove('error'); t.innerHTML = `<i class="fas fa-check-circle"></i> <span id="toast-message">${msg}</span>`; }
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+            if(playSound) playNotificationSound();
+        }
+
+        // Initialize Audio on first click anywhere
+        document.body.addEventListener('click', function initAudio() {
+            notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(()=>{});
+            document.body.removeEventListener('click', initAudio);
+        }, { once: true });
+
+        // Image Zoom Logic
+        function openLightbox(imgSrc, caption) {
+            document.getElementById('lightbox-img').src = imgSrc;
+            document.getElementById('lightbox-caption').innerText = caption;
+            document.getElementById('lightbox').classList.add('show');
+        }
+        function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+
         const PERMANENT_MENU = {
             "Aloo Dam Banarsi": 180, "Aloo Dam Kashmiri": 190, "Aloo Do Payaza": 140, "Aloo Govi": 130, "Aloo Matar": 130, "Aloo Palak": 130, "Aloo Paneer": 150, "Aloo Paratha": 70, "Aloo Parwal": 130, "Baby Corn Crispry": 270, "Boondi Raita": 110, "Boondi Raita (H)": 70, "Butter Naan": 80, "Butter Roti": 15, "Chi. Butter Masala": 200, "Chi. Chilly (B) (F)": 230, "Chi. Chilly (B) (H)": 150, "Chi. Chilly (B/L) (F)": 290, "Chi. Chilly (B/L) (H)": 170, "Chi. Curry": 160, "Chi. Dehati (F)": 550, "Chi. Dehati (H)": 320, "Chi. Do Payaza": 180, "Chi. Estu": 190, "Chi. Fried Rice": 260, "Chi. Ginger Kabab": 260, "Chi. Goli Kabab": 260, "Chi. Karahi": 220, "Chi. Kasha (F)": 510, "Chi. Kurma": 210, "Chi. Leg Kabab": 280, "Chi. Lolliop (B/L) (F)": 310, "Chi. Manchurian": 280, "Chi. Masala": 200, "Chi. Moglai": 210, "Chi. Moglai Paratha": 190, "Chi. Murg Mussalam": 560, "Chi. Noorani": 230, "Chi. Pasanda": 220, "Chi. Reshmi Kabab": 280, "Chi. Shahi Kurma": 210, "Chi. Sone Spl. (F)": 570, "Chi. Sone Spl. (H)": 340, "Chi. Tandoori (F)": 450, "Chi. Tandoori (H)": 260, "Chi. Tikka": 270, "Chi. Tikka Butter Masala": 330, "Chicken Biryani": 220, "Chicken Chowmein": 270, "Chicken Cream Soup": 140, "Chicken Cutlete": 200, "Chicken Fry": 160, "Chicken Hot & Source Soup": 170, "Chicken Manchow Soup": 150, "Chicken Pakora": 260, "Chicken Pulao": 230, "Chicken Roll": 230, "Cholla Bhatura": 110, "Coffee": 45, "Curd": 80, "Dal Butter Fry": 130, "Dal Fry": 110, "Dal Makhani": 140, "Dal Moglai": 160, "Dal Tarka": 120, "Egg Biryani": 190, "Egg Bugiya": 80, "Egg Butter Masala": 140, "Egg Chowmein": 230, "Egg Do Payaza": 120, "Egg Fried Rice": 190, "Egg Masala": 150, "Egg Pakora": 160, "Egg. Curry": 110, "Egg. Roll": 150, "Finger Chips": 130, "Fish Curry": 150, "Fish Do Pyaza": 150, "Fish Estu": 160, "Fish Fry": 140, "Fish Masala": 160, "Fresh Paneer": 200, "Fruit Cream": 90, "Garlic Naan": 90, "Govi Pakora": 140, "Green Salad- L": 110, "Green Salad- S": 70, "Jeera Rice": 110, "Jeera Rice (H)": 70, "Jeera thanda 20": 20, "Kaju Paneer": 300, "Kalajamun": 25, "Khir": 80, "Malai Kofta": 210, "Masala Kulcha": 110, "Matar Paneer": 150, "Mix Chowmein": 260, "Mix Vegetable": 150, "Mix. Fried Rice": 270, "Mushroom (B) Masala": 230, "Mushroom (H)": 160, "Mushroom Chilly (F)": 250, "Mushroom Chilly (H)": 150, "Mushroom Chowmein": 250, "Mushroom Curry": 210, "Mushroom Dehati": 300, "Mushroom Dehati (H)": 160, "Mushroom Do Piyaza": 220, "Mushroom Estu": 220, "Mushroom Fried Rice": 250, "Mushroom Karahi": 240, "Mushroom Masala": 230, "Mutton Curry (4 Pic)": 300, "Mutton Do Pyaza (4 Pic)": 320, "Mutton Estu (2 Pic)": 220, "Mutton Spl. (12 Pic) F+H": 980, "Mutton Spl. (8 Pic)": 650, "Naan": 60, "Omlete": 60, "Omlete Curry": 120, "Onion Fry Rice": 120, "Onion Pakora": 150, "Palak Paneer": 170, "Paneer Bhujiya": 210, "Paneer Butter Masala": 200, "Paneer Chilly (F)": 220, "Paneer Chilly (H)": 140, "Paneer Chowmein": 240, "Paneer Dehati (F)": 290, "Paneer Dehati (H)": 160, "Paneer Diwani": 250, "Paneer Do Pyaza": 190, "Paneer Estu": 210, "Paneer Fried Rice": 250, "Paneer Goli Kabab": 250, "Paneer Karahi": 230, "Paneer Karahi (H)": 140, "Paneer Masala": 200, "Paneer Pakora": 240, "Paneer Paratha": 110, "Paneer Pasanda": 220, "Paneer Punjabi": 250, "Paneer Sandwich": 130, "Paneer Shahi Kurma": 230, "Paneer Stuff Naan": 140, "Paneer Stuff Paratha": 110, "Paneer Tikka": 250, "Paneer biryani": 240, "Pappad Masala": 120, "Peanut": 120, "Peanut Masala": 150, "Pease Pulao": 140, "Plain Dal": 90, "Plain Kulcha": 80, "Plain Rice": 100, "Plain Rice (H)": 60, "Rasgulla": 20, "Roti": 12, "Seasonal Veg. Bhujiya": 120, "Shahi Naan": 130, "Shahi Paneer": 210, "Shahi Paratha": 130, "Sone Shahi Paratha": 140, "Sone Special Pulao": 210, "Sone Spl. Paneer": 270, "Sone Spl. Paneer (F+H)": 430, "Sone Spl. Paneer Chat-Patta": 250, "Sone Spl. Veg.": 180, "Stuff Capssicam": 160, "Stuff Tomato": 160, "Sweet Corn Crispy": 110, "T. Paratha": 70, "Tawa Butter Roti": 12, "Tawa Roti": 10, "Tea Spl.": 20, "Thanda 40": 40, "Thanda 45": 45, "Thanda 50": 50, "Thanda 60": 60, "Thanda 90": 90, "Thanda 90 Coco cola": 90, "Thanda Bottle 30": 30, "Thanda Bottle 35": 35, "Tomato Soup": 80, "Tost Omlete": 90, "Tost and Butter": 60, "Veg. Biryani": 170, "Veg. Chowmein (F)": 190, "Veg. Chowmein (H)": 110, "Veg. Cutlete": 160, "Veg. Fried Rice": 170, "Veg. Goli Kabab": 220, "Veg. Hot & Source Soup": 100, "Veg. Jhal Phrazy": 160, "Veg. Kofta Curry": 160, "Veg. Manchow Soup": 120, "Veg. Manchurian (F)": 170, "Veg. Manchurian (H)": 110, "Veg. Moglai Paratha": 120, "Veg. Navratan Kurma": 190, "Veg. Pulao": 150, "Veg. Raita": 130, "Veg. Raita (H)": 70, "Veg. Roll": 120, "Veg. Sandwich": 100, "Veg. Shahi Pulao": 190, "Veg. Stuff Naan": 120, "Veg. Stuff Paratha": 100, "Vegetable Chat-Patta": 160, "Vegetable Pakora": 160, "Water Bottle 20": 20
         };
@@ -223,13 +295,13 @@
             if (qInput === 'H') { finalPrice = Math.round(p / 2); finalName = n + " (Half)"; q=1; } else if (qInput === 'FH') { finalPrice = p + Math.round(p / 2); finalName = n + " (F+H)"; q=1; }
             let totalAmount = finalPrice * q, idx = billItems.findIndex(i => i.name === finalName && i.price === finalPrice);
             if(idx > -1) { billItems[idx].qty += q; billItems[idx].total = billItems[idx].qty * billItems[idx].price; } else { billItems.push({name: finalName, price: finalPrice, qty: q, total: totalAmount}); }
-            updateBillDisplay(); document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").value="1";
+            updateBillDisplay(); showToast("Item added to Cart!", false, true); document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").focus(); document.getElementById("qtyInput").value="1";
         }
 
         function updateBillDisplay() {
             let tb = document.getElementById("billBody"); tb.innerHTML = ""; let gt = 0;
             if(billItems.length === 0) tb.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Cart is empty</td></tr>";
-            else { billItems.forEach((i, idx) => { gt += i.total; tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td style="font-weight:bold;">₹${i.total}</td><td style="text-align:center;"><button onclick="billItems.splice(${idx},1);updateBillDisplay();" style="background:#ffebee;color:#b31217;border:1px solid #ffcdd2;padding:6px;border-radius:8px;cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>`; }); }
+            else { billItems.forEach((i, idx) => { gt += i.total; tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td style="font-weight:bold;">₹${i.total}</td><td style="text-align:center;"><button onclick="billItems.splice(${idx},1);updateBillDisplay(); showToast('Item removed', true, false);" style="background:#ffebee;color:#b31217;border:1px solid #ffcdd2;padding:6px;border-radius:8px;cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>`; }); }
             document.getElementById("grandTotal").innerText = gt;
         }
 
@@ -241,9 +313,9 @@
         }
 
         function verifyLocationAndCheckout() {
-            if(billItems.length === 0) return alert("Cart khali hai!");
+            if(billItems.length === 0) return showToast("Your Cart is empty!", true, true);
             if (navigator.geolocation) {
-                alert("Location checking... Please wait.");
+                showToast("Verifying location...", false, false);
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let dist = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, RESTAURANT_LAT, RESTAURANT_LON);
@@ -269,7 +341,10 @@
             let waText = `*NEW ONLINE ORDER* 🚨%0A%0A*Order ID:* ${orderId}%0A*Name:* ${name}%0A*Phone:* ${phone}%0A%0A*ITEMS:*%0A`;
             billItems.forEach(i => { waText += `▪️ ${i.name} (Qty: ${i.qty}) - ₹${i.total}%0A`; });
             waText += `%0A*TOTAL PAYABLE:* ₹${gt}%0A*Payment Mode:* Online QR Scanned%0A%0A_Please verify my payment and accept order!_`;
-            window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank');
+            
+            showToast("Order Placed Successfully!", false, true);
+            setTimeout(() => { window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank'); }, 1000);
+            
             billItems = []; updateBillDisplay(); closeModal(); document.getElementById('searchPhone').value = phone; openTab('historyTab', document.querySelectorAll('.nav-links a')[2]);
         }
 
@@ -292,7 +367,7 @@
                 html += `</div>`; container.innerHTML += html;
             });
         }
-        async function cancelMyOrder(orderId) { if(confirm("Are you sure you want to cancel this order?")) { await supabaseClient.from('customer_orders').delete().eq('order_id', orderId); alert("Order Cancelled!"); loadCustomerHistory(); } }
+        async function cancelMyOrder(orderId) { if(confirm("Are you sure you want to cancel this order?")) { await supabaseClient.from('customer_orders').delete().eq('order_id', orderId); showToast("Order Cancelled!", true, true); loadCustomerHistory(); } }
     </script>
 </body>
 </html>
