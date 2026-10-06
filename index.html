@@ -9,20 +9,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --bg: #F8F9FA; --card: #FFFFFF; --text: #1C1C1E; --orange-grad: linear-gradient(135deg, #e52d27 0%, #b31217 100%); --green: #34C759; --shadow: 0 8px 20px rgba(0,0,0,0.06); }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; overflow-x:hidden;}
         
-        /* HEADER LOGO FIXED */
         .top-header { background: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.06);}
         .top-header .center-logo { height: 55px; object-fit: contain; margin: 0 auto;}
         
-        /* NOTIFICATION TOAST */
         #notification-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #34C759; color: white; padding: 15px 25px; border-radius: 50px; box-shadow: 0 10px 30px rgba(52, 199, 89, 0.4); z-index: 9999; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); width:max-content;}
         #notification-toast.show { top: 20px; }
         #notification-toast.error { background: #FF3B30; box-shadow: 0 10px 30px rgba(255, 59, 48, 0.4); }
         
-        /* SIDEBAR */
         .sidebar { width: 260px; background-color: #FFFFFF; position: fixed; height: 100%; left: -260px; top: 0; z-index: 1001; transition: 0.3s; box-shadow: 2px 0 15px rgba(0,0,0,0.1);}
         .sidebar.show { left: 0; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; backdrop-filter: blur(3px);}
@@ -35,7 +33,6 @@
         .tab-panel.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* DASHBOARD BEAUTIFICATION & IMAGE ZOOM */
         .dash-section { margin-bottom: 25px; }
         .dash-section h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; color: #b31217; margin: 0 0 12px 0; border-left: 4px solid #b31217; padding-left: 10px;}
         
@@ -49,7 +46,6 @@
         .two-col-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;}
         .two-col-grid .gallery-item img { height: 140px; }
 
-        /* IMAGE LIGHTBOX (ZOOM) */
         #lightbox { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); backdrop-filter: blur(8px); flex-direction: column; align-items: center; justify-content: center; opacity:0; transition: opacity 0.3s;}
         #lightbox.show { display: flex; opacity: 1; }
         #lightbox img { max-width: 95%; max-height: 80vh; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -70,9 +66,11 @@
         .btn-checkout { background: var(--green); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; width: 100%;}
         .btn-danger { background: #ffebee; color: #b31217; border: 1px solid #ffcdd2; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; width: 100%; margin-top:5px;}
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
-        .modal-content { background-color: var(--card); margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px;}
+        .modal-content { background-color: var(--card); margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height:90vh; overflow-y:auto;}
+        
         .qr-box { text-align: center; padding: 15px; background: #fff; border-radius: 16px; margin-bottom: 15px; border: 2px dashed #b31217; }
-        .qr-box img { width: 200px; height: 200px; object-fit: contain; margin-bottom: 10px; border-radius: 8px;}
+        .qr-box img { width: 180px; height: 180px; object-fit: contain; margin-bottom: 5px; border-radius: 8px;}
+        
         .history-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.03);}
     </style>
 </head>
@@ -107,7 +105,6 @@
 
     <button class="fab-order" id="quickOrderBtn" onclick="openTab('billingTab', document.querySelectorAll('.nav-links a')[1])"><i class="fas fa-shopping-cart"></i> Order Now</button>
 
-    <!-- BEAUTIFUL DASHBOARD WITH GALLERY -->
     <div id="dashboardTab" class="tab-panel active">
         <div class="dash-section">
             <h2>Welcome to Sone Restaurant</h2>
@@ -154,7 +151,6 @@
         </div>
     </div>
 
-    <!-- ORDER TAB -->
     <div id="billingTab" class="tab-panel">
         <div class="card">
             <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; color:#b31217;"><i class="fas fa-search"></i> Find Your Dish</h3>
@@ -181,12 +177,10 @@
             <div style="display:flex; justify-content:space-between; font-size:22px; font-weight:800; margin-bottom: 20px;">
                 <span>Total:</span><span style="color:var(--green);">₹ <span id="grandTotal">0</span></span>
             </div>
-            <!-- 5KM LOCATION CHECK -->
             <button class="btn-checkout" onclick="verifyLocationAndCheckout()">Proceed to Pay <i class="fas fa-location-arrow"></i></button>
         </div>
     </div>
 
-    <!-- HISTORY TAB -->
     <div id="historyTab" class="tab-panel">
         <div class="card">
             <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color:#b31217;"><i class="fas fa-history"></i> My Order History</h3>
@@ -202,14 +196,26 @@
     <div id="checkoutModal" class="modal">
         <div class="modal-content">
             <div style="text-align: right;"><i class="fas fa-times" style="font-size:24px; color:#888; cursor:pointer;" onclick="closeModal()"></i></div>
-            <h3 style="margin: -15px 0 15px 0; text-align: center;">Payment Details</h3>
+            <h3 style="margin: -15px 0 10px 0; text-align: center;">Payment Details</h3>
+            
             <div class="qr-box">
                 <img src="qr.png" alt="Scan QR Code to Pay">
                 <div style="color:var(--green); font-size:28px; font-weight:800; margin-top:5px;">₹ <span id="modalGrandTotal">0</span></div>
+                <!-- DOWNLOAD QR BUTTON -->
+                <a href="qr.png" download="Sone_Restaurant_QR.png" class="btn-add" style="display:inline-block; padding:10px 20px; font-size:14px; margin-top:10px; text-decoration:none; width:auto;"><i class="fas fa-download"></i> Download QR</a>
             </div>
+            
             <div class="form-group"><label>Your Name (नाम)</label><input type="text" id="custName"></div>
             <div class="form-group"><label>Phone No. (मोबाइल)</label><input type="tel" id="custPhone" maxlength="10"></div>
-            <button class="btn-checkout" onclick="placeOrderAndWhatsApp()" style="background: #25D366; margin-top:10px;"><i class="fab fa-whatsapp"></i> Send on WhatsApp</button>
+            
+            <!-- UTR NUMBER INPUT -->
+            <div class="form-group">
+                <label style="color:#b31217;">UTR / Transaction ID (पेमेंट के बाद डालें)</label>
+                <input type="text" id="utrNumber" placeholder="Ex: 312345678901">
+            </div>
+
+            <p style="font-size:11px; text-align:center; color:#555; margin-bottom:5px;">Note: Bill ki photo download hogi, jise aap WhatsApp me attach karke bhej sakte hain.</p>
+            <button class="btn-checkout" onclick="placeOrderAndWhatsApp()" style="background: #25D366; margin-top:5px;"><i class="fab fa-whatsapp"></i> Send on WhatsApp</button>
         </div>
     </div>
 
@@ -220,11 +226,8 @@
         const RESTAURANT_WHATSAPP_NUMBER = '919155745145'; 
         const RESTAURANT_LAT = 25.5560; const RESTAURANT_LON = 84.1510;
 
-        // SOUND & TOAST LOGIC
         const notifSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-        function playNotificationSound() {
-            notifSound.play().catch(err => console.log("Sound autoplay blocked by browser. User must tap the screen once."));
-        }
+        function playNotificationSound() { notifSound.play().catch(err => console.log("User interaction required for sound.")); }
 
         function showToast(msg, isError = false, playSound = true) {
             let t = document.getElementById('notification-toast');
@@ -235,13 +238,11 @@
             if(playSound) playNotificationSound();
         }
 
-        // Initialize Audio on first click anywhere
         document.body.addEventListener('click', function initAudio() {
             notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(()=>{});
             document.body.removeEventListener('click', initAudio);
         }, { once: true });
 
-        // Image Zoom Logic
         function openLightbox(imgSrc, caption) {
             document.getElementById('lightbox-img').src = imgSrc;
             document.getElementById('lightbox-caption').innerText = caption;
@@ -319,7 +320,7 @@
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let dist = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, RESTAURANT_LAT, RESTAURANT_LON);
-                        if(dist > 5) { alert(`Sorry! Aap Sone Restaurant se ${dist.toFixed(1)} km door hain. Delivery sirf 5km ke andar hoti है.`); } 
+                        if(dist > 5) { alert(`Sorry! Aap Sone Restaurant se ${dist.toFixed(1)} km door hain. Delivery sirf 5km ke andar hoti hai.`); } 
                         else { openCheckoutModal(); }
                     },
                     (error) => { alert("Order karne ke liye Location (GPS) on karna zaroori hai!"); }
@@ -330,20 +331,72 @@
         function openCheckoutModal() { document.getElementById('modalGrandTotal').innerText = billItems.reduce((s,i) => s + i.total, 0); document.getElementById('custName').value = localStorage.getItem('sone_cust_name') || ''; document.getElementById('custPhone').value = localStorage.getItem('sone_cust_phone') || ''; document.getElementById('checkoutModal').style.display = 'block'; }
         function closeModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
+        // GENERATE AND DOWNLOAD IMAGE RECEIPT FUNCTION
+        function generateReceiptImage(orderId, name, phone, utr, gt, items) {
+            return new Promise((resolve) => {
+                let div = document.createElement('div');
+                div.style.padding = "20px"; div.style.background = "#fff"; div.style.width = "350px";
+                div.style.position = "absolute"; div.style.left = "-9999px"; div.style.border = "3px dashed #b31217";
+                div.style.fontFamily = "'Poppins', sans-serif";
+                
+                let itemsHtml = items.map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:14px;"><span>${i.name} (x${i.qty})</span><span>₹${i.total}</span></div>`).join('');
+
+                div.innerHTML = `
+                    <div style="text-align:center; border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:10px;">
+                        <h2 style="margin:0; color:#b31217; font-weight:800;">SONE RESTAURANT</h2>
+                        <p style="margin:0; font-size:12px; color:#555;">Online Order Receipt</p>
+                    </div>
+                    <div style="font-size:14px;">
+                        <p style="margin:5px 0;"><b>Order ID:</b> ${orderId}</p>
+                        <p style="margin:5px 0;"><b>Name:</b> ${name}</p>
+                        <p style="margin:5px 0;"><b>Phone:</b> ${phone}</p>
+                        ${utr ? `<p style="margin:5px 0;"><b>UTR No:</b> ${utr}</p>` : ''}
+                    </div>
+                    <div style="border-top:2px solid #eee; border-bottom:2px solid #eee; padding:15px 0; margin:15px 0;">
+                        ${itemsHtml}
+                    </div>
+                    <h3 style="text-align:right; color:#34C759; margin:0;">Total Paid: ₹${gt}</h3>
+                    <p style="text-align:center; font-size:12px; margin-top:20px; font-weight:bold;">Thank You For Ordering!</p>
+                `;
+                document.body.appendChild(div);
+                
+                html2canvas(div, { scale: 2 }).then(canvas => {
+                    let link = document.createElement('a');
+                    link.download = `Sone_Receipt_${orderId}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                    document.body.removeChild(div);
+                    resolve();
+                });
+            });
+        }
+
         async function placeOrderAndWhatsApp() {
-            let name = document.getElementById('custName').value.trim(), phone = document.getElementById('custPhone').value.trim(), gt = parseFloat(document.getElementById('modalGrandTotal').innerText);
+            let name = document.getElementById('custName').value.trim(), phone = document.getElementById('custPhone').value.trim();
+            let utr = document.getElementById('utrNumber').value.trim(), gt = parseFloat(document.getElementById('modalGrandTotal').innerText);
+            
             if(!name || !phone || phone.length < 10) return alert("Sahi Naam aur Phone Number dalein!");
+            if(!utr) return alert("Kripya payment karne ke baad apna UTR / Transaction ID zaroor dalein!");
+            
             localStorage.setItem('sone_cust_name', name); localStorage.setItem('sone_cust_phone', phone);
             
             let orderId = "ORD-" + Math.floor(1000 + Math.random() * 9000);
-            try { await supabaseClient.from('customer_orders').insert([{ order_id: orderId, customer_name: name, phone: phone, total_amount: gt, items_json: billItems, order_status: 'Checking' }]); } catch(e) {}
-
-            let waText = `*NEW ONLINE ORDER* 🚨%0A%0A*Order ID:* ${orderId}%0A*Name:* ${name}%0A*Phone:* ${phone}%0A%0A*ITEMS:*%0A`;
-            billItems.forEach(i => { waText += `▪️ ${i.name} (Qty: ${i.qty}) - ₹${i.total}%0A`; });
-            waText += `%0A*TOTAL PAYABLE:* ₹${gt}%0A*Payment Mode:* Online QR Scanned%0A%0A_Please verify my payment and accept order!_`;
             
-            showToast("Order Placed Successfully!", false, true);
-            setTimeout(() => { window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank'); }, 1000);
+            showToast("Generating Receipt & Opening WhatsApp...", false, true);
+
+            // SAVE TO DATABASE (Appended UTR in name for admin context)
+            try { await supabaseClient.from('customer_orders').insert([{ order_id: orderId, customer_name: `${name} (UTR: ${utr})`, phone: phone, total_amount: gt, items_json: billItems, order_status: 'Checking' }]); } catch(e) {}
+
+            // AUTO DOWNLOAD IMAGE RECEIPT FIRST
+            await generateReceiptImage(orderId, name, phone, utr, gt, billItems);
+
+            // PREPARE WHATSAPP TEXT
+            let waText = `*NEW ONLINE ORDER* 🚨%0A%0A*Order ID:* ${orderId}%0A*Name:* ${name}%0A*Phone:* ${phone}%0A*UTR No:* ${utr}%0A%0A*ITEMS:*%0A`;
+            billItems.forEach(i => { waText += `▪️ ${i.name} (Qty: ${i.qty}) - ₹${i.total}%0A`; });
+            waText += `%0A*TOTAL PAYABLE:* ₹${gt}%0A*Payment Mode:* Online QR Scanned%0A%0A_Please check my UTR and accept order. I have also attached my Photo Receipt!_`;
+            
+            // REDIRECT TO WHATSAPP AFTER SHORT DELAY
+            setTimeout(() => { window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank'); }, 1500);
             
             billItems = []; updateBillDisplay(); closeModal(); document.getElementById('searchPhone').value = phone; openTab('historyTab', document.querySelectorAll('.nav-links a')[2]);
         }
