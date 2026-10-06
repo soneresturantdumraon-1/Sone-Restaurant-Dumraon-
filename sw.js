@@ -1,6 +1,6 @@
 const CACHE_NAME = 'sone-customer-v3';
 const URLS_TO_CACHE = [
-  './index.html', './manifest (1).json', 
+  './index.html', './manifest.json', 
   './sonelogo1.png', './sonelogo.png', 
   './sonfront.png', './sonein.png', './sonein1.png', 
   './partyhall.png', './partyhall1.png', './qr.png'
