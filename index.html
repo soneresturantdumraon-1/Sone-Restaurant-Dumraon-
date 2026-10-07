@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sone Restaurant - Order Food</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="sonelogo1.png">
+    <link rel="icon" type="image/png" href="sonelogo.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -77,7 +77,6 @@
 <body>
     <div id="notification-toast"><i class="fas fa-check-circle"></i> <span id="toast-message">Action Successful</span></div>
 
-    <!-- LIGHTBOX FOR ZOOM -->
     <div id="lightbox" onclick="closeLightbox()">
         <span id="lightbox-close">&times;</span>
         <img id="lightbox-img" src="" alt="Zoomed Image">
@@ -99,7 +98,7 @@
 
     <div class="top-header">
         <button onclick="toggleSidebar()" style="background:transparent; border:none; font-size:24px; color:#1C1C1E; cursor:pointer;"><i class="fas fa-bars"></i></button>
-        <img src="sonelogo1.png" alt="Sone Restaurant" class="center-logo">
+        <img src="sonelogo.png" alt="Sone Restaurant" class="center-logo">
         <div style="width: 24px;"></div>
     </div>
 
@@ -116,7 +115,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="dash-section">
             <h2>Premium Ambience</h2>
             <div class="two-col-grid">
@@ -147,6 +146,53 @@
                     <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
                 </div>
             </div>
+          
+          <div class="dash-section">
+            <h2>Our Menu Card</h2>
+            <div class="two-col-grid">
+                <div class="gallery-item" onclick="openLightbox('menu1.png', 'Menu Page 1')">
+                    <img src="menu1.png" alt="Menu 1">
+                    <div class="overlay-text">Page 1</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu2.png', 'Menu Page 2')">
+                    <img src="menu2.png" alt="Menu 2">
+                    <div class="overlay-text">Page 2</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu3.png', 'Menu Page 3')">
+                    <img src="menu3.png" alt="Menu 3">
+                    <div class="overlay-text">Page 3</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu4.png', 'Menu Page 4')">
+                    <img src="menu4.png" alt="Menu 4">
+                    <div class="overlay-text">Page 4</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu5.png', 'Menu Page 5')">
+                    <img src="menu5.png" alt="Menu 5">
+                    <div class="overlay-text">Page 5</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu6.png', 'Menu Page 6')">
+                    <img src="menu6.png" alt="Menu 6">
+                    <div class="overlay-text">Page 6</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu7.png', 'Menu Page 7')">
+                    <img src="menu7.png" alt="Menu 7">
+                    <div class="overlay-text">Page 7</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+                <div class="gallery-item" onclick="openLightbox('menu8.png', 'Menu Page 8')">
+                    <img src="menu8.png" alt="Menu 8">
+                    <div class="overlay-text">Page 8</div>
+                    <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
+                </div>
+            </div>
+          </div>
+          
             <p style="text-align:center; font-size:12px; color:#888; margin-top:10px;"><i class="fas fa-info-circle"></i> Click on any photo to view full size</p>
         </div>
     </div>
@@ -192,7 +238,6 @@
         </div>
     </div>
 
-    <!-- PAYMENT MODAL -->
     <div id="checkoutModal" class="modal">
         <div class="modal-content">
             <div style="text-align: right;"><i class="fas fa-times" style="font-size:24px; color:#888; cursor:pointer;" onclick="closeModal()"></i></div>
@@ -201,14 +246,12 @@
             <div class="qr-box">
                 <img src="qr.png" alt="Scan QR Code to Pay">
                 <div style="color:var(--green); font-size:28px; font-weight:800; margin-top:5px;">₹ <span id="modalGrandTotal">0</span></div>
-                <!-- DOWNLOAD QR BUTTON -->
                 <a href="qr.png" download="Sone_Restaurant_QR.png" class="btn-add" style="display:inline-block; padding:10px 20px; font-size:14px; margin-top:10px; text-decoration:none; width:auto;"><i class="fas fa-download"></i> Download QR</a>
             </div>
             
             <div class="form-group"><label>Your Name (नाम)</label><input type="text" id="custName"></div>
             <div class="form-group"><label>Phone No. (मोबाइल)</label><input type="tel" id="custPhone" maxlength="10"></div>
             
-            <!-- UTR NUMBER INPUT -->
             <div class="form-group">
                 <label style="color:#b31217;">UTR / Transaction ID (पेमेंट के बाद डालें)</label>
                 <input type="text" id="utrNumber" placeholder="Ex: 312345678901">
@@ -226,20 +269,28 @@
         const RESTAURANT_WHATSAPP_NUMBER = '919155745145'; 
         const RESTAURANT_LAT = 25.5560; const RESTAURANT_LON = 84.1510;
 
-        const notifSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-        function playNotificationSound() { notifSound.play().catch(err => console.log("User interaction required for sound.")); }
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                let msg = new SpeechSynthesisUtterance();
+                msg.text = text;
+                msg.lang = 'hi-IN'; 
+                msg.rate = 0.9;
+                window.speechSynthesis.speak(msg);
+            }
+        }
 
-        function showToast(msg, isError = false, playSound = true) {
+        function showToast(msg, isError = false) {
             let t = document.getElementById('notification-toast');
             if(isError) { t.classList.add('error'); t.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span id="toast-message">${msg}</span>`; } 
             else { t.classList.remove('error'); t.innerHTML = `<i class="fas fa-check-circle"></i> <span id="toast-message">${msg}</span>`; }
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
-            if(playSound) playNotificationSound();
         }
 
         document.body.addEventListener('click', function initAudio() {
-            notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(()=>{});
+            let dummy = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(dummy);
             document.body.removeEventListener('click', initAudio);
         }, { once: true });
 
@@ -257,7 +308,7 @@
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installAppContainer').style.display = 'block'; });
         function installCustomerApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choiceResult) => { if (choiceResult.outcome === 'accepted') document.getElementById('installAppContainer').style.display = 'none'; deferredPrompt = null; }); } }
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw (1).js'); }); }
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
 
         let menuData = JSON.parse(JSON.stringify(PERMANENT_MENU)); let itemNames = Object.keys(menuData); let billItems = []; 
         async function fetchMenu() {
@@ -296,13 +347,13 @@
             if (qInput === 'H') { finalPrice = Math.round(p / 2); finalName = n + " (Half)"; q=1; } else if (qInput === 'FH') { finalPrice = p + Math.round(p / 2); finalName = n + " (F+H)"; q=1; }
             let totalAmount = finalPrice * q, idx = billItems.findIndex(i => i.name === finalName && i.price === finalPrice);
             if(idx > -1) { billItems[idx].qty += q; billItems[idx].total = billItems[idx].qty * billItems[idx].price; } else { billItems.push({name: finalName, price: finalPrice, qty: q, total: totalAmount}); }
-            updateBillDisplay(); showToast("Item added to Cart!", false, true); document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").focus(); document.getElementById("qtyInput").value="1";
+            updateBillDisplay(); showToast("Item added to Cart!", false); document.getElementById("itemInput").value=""; document.getElementById("priceInput").value=""; document.getElementById("qtyInput").focus(); document.getElementById("qtyInput").value="1";
         }
 
         function updateBillDisplay() {
             let tb = document.getElementById("billBody"); tb.innerHTML = ""; let gt = 0;
             if(billItems.length === 0) tb.innerHTML = "<tr><td colspan='4' style='text-align:center;'>Cart is empty</td></tr>";
-            else { billItems.forEach((i, idx) => { gt += i.total; tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td style="font-weight:bold;">₹${i.total}</td><td style="text-align:center;"><button onclick="billItems.splice(${idx},1);updateBillDisplay(); showToast('Item removed', true, false);" style="background:#ffebee;color:#b31217;border:1px solid #ffcdd2;padding:6px;border-radius:8px;cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>`; }); }
+            else { billItems.forEach((i, idx) => { gt += i.total; tb.innerHTML += `<tr><td>${i.name}</td><td>${i.qty}</td><td style="font-weight:bold;">₹${i.total}</td><td style="text-align:center;"><button onclick="billItems.splice(${idx},1);updateBillDisplay(); showToast('Item removed', true);" style="background:#ffebee;color:#b31217;border:1px solid #ffcdd2;padding:6px;border-radius:8px;cursor:pointer;"><i class="fas fa-trash-alt"></i></button></td></tr>`; }); }
             document.getElementById("grandTotal").innerText = gt;
         }
 
@@ -314,9 +365,9 @@
         }
 
         function verifyLocationAndCheckout() {
-            if(billItems.length === 0) return showToast("Your Cart is empty!", true, true);
+            if(billItems.length === 0) return showToast("Your Cart is empty!", true);
             if (navigator.geolocation) {
-                showToast("Verifying location...", false, false);
+                showToast("Verifying location...", false);
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         let dist = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, RESTAURANT_LAT, RESTAURANT_LON);
@@ -331,7 +382,6 @@
         function openCheckoutModal() { document.getElementById('modalGrandTotal').innerText = billItems.reduce((s,i) => s + i.total, 0); document.getElementById('custName').value = localStorage.getItem('sone_cust_name') || ''; document.getElementById('custPhone').value = localStorage.getItem('sone_cust_phone') || ''; document.getElementById('checkoutModal').style.display = 'block'; }
         function closeModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
-        // GENERATE AND DOWNLOAD IMAGE RECEIPT FUNCTION
         function generateReceiptImage(orderId, name, phone, utr, gt, items) {
             return new Promise((resolve) => {
                 let div = document.createElement('div');
@@ -382,20 +432,17 @@
             
             let orderId = "ORD-" + Math.floor(1000 + Math.random() * 9000);
             
-            showToast("Generating Receipt & Opening WhatsApp...", false, true);
+            showToast("Generating Receipt & Opening WhatsApp...", false);
+            speakText(`Order place ho gaya hai, ${name} ji`); 
 
-            // SAVE TO DATABASE (Appended UTR in name for admin context)
             try { await supabaseClient.from('customer_orders').insert([{ order_id: orderId, customer_name: `${name} (UTR: ${utr})`, phone: phone, total_amount: gt, items_json: billItems, order_status: 'Checking' }]); } catch(e) {}
 
-            // AUTO DOWNLOAD IMAGE RECEIPT FIRST
             await generateReceiptImage(orderId, name, phone, utr, gt, billItems);
 
-            // PREPARE WHATSAPP TEXT
             let waText = `*NEW ONLINE ORDER* 🚨%0A%0A*Order ID:* ${orderId}%0A*Name:* ${name}%0A*Phone:* ${phone}%0A*UTR No:* ${utr}%0A%0A*ITEMS:*%0A`;
             billItems.forEach(i => { waText += `▪️ ${i.name} (Qty: ${i.qty}) - ₹${i.total}%0A`; });
             waText += `%0A*TOTAL PAYABLE:* ₹${gt}%0A*Payment Mode:* Online QR Scanned%0A%0A_Please check my UTR and accept order. I have also attached my Photo Receipt!_`;
             
-            // REDIRECT TO WHATSAPP AFTER SHORT DELAY
             setTimeout(() => { window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${waText}`, '_blank'); }, 1500);
             
             billItems = []; updateBillDisplay(); closeModal(); document.getElementById('searchPhone').value = phone; openTab('historyTab', document.querySelectorAll('.nav-links a')[2]);
@@ -420,7 +467,7 @@
                 html += `</div>`; container.innerHTML += html;
             });
         }
-        async function cancelMyOrder(orderId) { if(confirm("Are you sure you want to cancel this order?")) { await supabaseClient.from('customer_orders').delete().eq('order_id', orderId); showToast("Order Cancelled!", true, true); loadCustomerHistory(); } }
+        async function cancelMyOrder(orderId) { if(confirm("Are you sure you want to cancel this order?")) { await supabaseClient.from('customer_orders').delete().eq('order_id', orderId); showToast("Order Cancelled!", true); loadCustomerHistory(); } }
     </script>
 </body>
 </html>
