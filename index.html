@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- FIREBASE SDK FOR NOTIFICATIONS -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <style>
         :root { --bg: #F8F9FA; --card: #FFFFFF; --text: #1C1C1E; --orange-grad: linear-gradient(135deg, #e52d27 0%, #b31217 100%); --green: #34C759; --shadow: 0 8px 20px rgba(0,0,0,0.06); }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); -webkit-tap-highlight-color: transparent; overflow-x:hidden;}
@@ -98,7 +101,6 @@
             <li><a class="active" onclick="openTab('dashboardTab', this)"><i class="fas fa-home" style="margin-right:15px; width:20px;"></i> Home</a></li>
             <li><a onclick="openTab('billingTab', this)"><i class="fas fa-utensils" style="margin-right:15px; width:20px;"></i> Order Food</a></li>
             <li><a onclick="openTab('historyTab', this)"><i class="fas fa-receipt" style="margin-right:15px; width:20px;"></i> My Orders</a></li>
-            <!-- PWA INSTALL BUTTON RESTORED -->
             <li id="installAppContainer" style="display:none; margin-top:15px;"><a onclick="installCustomerApp()" style="background:var(--green); color:white;"><i class="fas fa-download" style="margin-right:15px;"></i> Install App</a></li>
         </ul>
     </div>
@@ -268,15 +270,14 @@
     </div>
 
     <script>
+        // SUPABASE KEYS
         const SUPABASE_URL = 'https://gvsimqxwfuugugssvcus.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2c2ltcXh3ZnV1Z3Vnc3N2Y3VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NTcwOTUsImV4cCI6MjEwNjMzMzA5NX0.b1aIHuURJ4jqy7T9ulzzD9e5O7fjTcuer0_QhPlZTKk'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const RESTAURANT_WHATSAPP_NUMBER = '919155745145'; 
         
-        // SMART CATCH-UP NOTIFICATION LOGIC (For app open/close tracking)
         let custNotifiedOrders = JSON.parse(localStorage.getItem('sone_cust_notified_accepted')) || [];
         
-        // Audio Unlocker Policy Fix
         document.body.addEventListener('click', function unlockAudio() {
             let silent = new SpeechSynthesisUtterance(''); window.speechSynthesis.speak(silent);
             document.body.removeEventListener('click', unlockAudio);
@@ -312,7 +313,8 @@
             }
         }
 
-        // SMART POLLING SYSTEM (Catches missed notifications if app was closed)
+        // POLLING SYSTEM
+        let knownOrderStatuses = {}; 
         setInterval(async () => {
             let phone = localStorage.getItem('sone_cust_phone');
             if(!phone) return;
@@ -330,7 +332,7 @@
                             custNotifiedOrders.push(o.order_id);
                             localStorage.setItem('sone_cust_notified_accepted', JSON.stringify(custNotifiedOrders));
                             if(document.getElementById('historyTab').classList.contains('active')) loadCustomerHistory();
-                        }, index * 4000); // Delay for multiple notifications
+                        }, index * 4000); 
                     });
                 }
             }
@@ -481,8 +483,32 @@
         async function cancelMyOrder(orderId) { if(confirm("Are you sure?")) { await supabaseClient.from('customer_orders').delete().eq('order_id', orderId); showToast("Order Cancelled!", true); loadCustomerHistory(); } }
     </script>
     
-    <!-- PWA INSTALL & AUTO UPDATE SCRIPT -->
+    <!-- PWA & FIREBASE INIT SCRIPT -->
     <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyAJWHNvyuKt9yYoqfiz3NqjMZZQ92-Y348",
+          authDomain: "sone-restaurant.firebaseapp.com",
+          projectId: "sone-restaurant",
+          storageBucket: "sone-restaurant.firebasestorage.app",
+          messagingSenderId: "422050209675",
+          appId: "1:422050209675:web:bec7cbc69d14467c4b598e"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+        
+        messaging.requestPermission().then(() => {
+            return messaging.getToken();
+        }).then((token) => {
+            console.log('Customer Firebase Token:', token);
+        }).catch((err) => { console.log('Firebase Permission Error', err); });
+
+        messaging.onMessage((payload) => {
+            console.log('Message received. ', payload);
+            showToast(payload.notification.title, false);
+            speakText(payload.notification.body);
+        });
+
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => { 
             e.preventDefault(); deferredPrompt = e; 
@@ -501,7 +527,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(registration => {
+                navigator.serviceWorker.register('firebase-messaging-sw.js').then(registration => {
                     registration.update();
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
